@@ -178,6 +178,11 @@ class NovaApp:
         else:
             checks.append("OLED disabled: text fallback ready")
 
+        if os.getenv("NOVA_CLIMATE_ENABLED", "").strip().lower() in {"1", "true", "yes", "on"}:
+            checks.append("Climate sensor enabled: DHT sensor configured")
+        else:
+            checks.append("Climate sensor disabled: unavailable fallback ready")
+
         return "\n".join(checks)
 
     # ------------------------------------------------------------
@@ -270,6 +275,9 @@ class NovaApp:
             if "date" in lower or "day is it" in lower:
                 return self._date_command()
 
+            if self._looks_like_climate(lower):
+                return self._climate_command()
+
             if "joke" in lower:
                 return self._joke_command()
 
@@ -316,6 +324,21 @@ class NovaApp:
             return int(match.group(1))
         return None
 
+    def _looks_like_climate(self, text: str) -> bool:
+        if any(word in text for word in ["weather", "forecast", "outside", "rain"]):
+            return False
+        return any(
+            phrase in text
+            for phrase in [
+                "humidity",
+                "room temperature",
+                "inside temperature",
+                "indoor temperature",
+                "temperature sensor",
+                "climate",
+            ]
+        ) or text in {"temperature", "temp"}
+
     def _time_command(self) -> str:
         now = _dt.datetime.now()
         return f"It is {now.strftime('%I:%M %p').lstrip('0')}."
@@ -323,6 +346,14 @@ class NovaApp:
     def _date_command(self) -> str:
         now = _dt.datetime.now()
         return f"Today is {now.strftime('%A, %B %d, %Y')}."
+
+    def _climate_command(self) -> str:
+        try:
+            from nova import climate
+
+            return climate.climate_report()
+        except Exception:
+            return "The temperature and humidity sensor is not connected yet."
 
     def _joke_command(self) -> str:
         try:

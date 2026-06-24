@@ -72,6 +72,18 @@ Planned states:
 
 The OLED system should be expandable.
 
+## Temperature And Humidity Sensor
+
+Current target sensor:
+
+- DHT22/AM2302 temperature and humidity sensor.
+- VCC to physical pin 1, 3.3V.
+- DATA/OUT to physical pin 7, GPIO4.
+- GND to physical pin 9, ground.
+- Bare 4-pin sensors need a 10k pull-up resistor between VCC and DATA.
+
+The climate module should never crash Nova if the sensor is missing or a reading fails. The OLED should show placeholder temperature and humidity values until valid readings are available.
+
 ## LED Ring System
 
 The LED ring lets people understand Nova's status from across the room.

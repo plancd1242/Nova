@@ -68,7 +68,7 @@ class OledDisplay:
 
     def status(self, mode: str, extra_lines: list[str] | tuple[str, ...] | None = None) -> None:
         screen = STATUS_SCREENS.get(mode, STATUS_SCREENS["ready"])
-        lines = tuple(extra_lines) if extra_lines else screen.lines
+        lines = self._build_lines(screen, extra_lines)
 
         if not self.hardware_ready or self.device is None or self.image_tools is None:
             printable = " | ".join(line for line in (screen.title, *lines) if line)
@@ -92,6 +92,21 @@ class OledDisplay:
 
         self.device.image(image)
         self.device.show()
+
+    def _build_lines(
+        self,
+        screen: OledStatus,
+        extra_lines: list[str] | tuple[str, ...] | None = None,
+    ) -> tuple[str, ...]:
+        lines = tuple(extra_lines) if extra_lines else screen.lines
+        if screen.mode in {"ready", "waiting", "done", "thinking"}:
+            try:
+                from nova import climate
+
+                lines = (*climate.oled_lines(), *lines)
+            except Exception:
+                lines = ("Temp: --.- F", "Humidity: -- %", *lines)
+        return lines[:4]
 
 
 _display: OledDisplay | None = None

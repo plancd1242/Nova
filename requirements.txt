@@ -3,4 +3,3 @@ requests
 sympy
 apscheduler
 python-dateutil
-
