@@ -183,7 +183,7 @@ Raspberry Pi wiring:
 | Sensor pin | Raspberry Pi physical pin | Raspberry Pi GPIO name |
 | --- | --- | --- |
 | VCC / + | Pin 1 | 3.3V |
-| DATA / OUT | Pin 7 | GPIO4 |
+| DATA / OUT | Pin 11 | GPIO17 |
 | GND / - | Pin 9 | Ground |
 
 If your sensor is the bare 4-pin DHT22 instead of a 3-pin module, add a 10k pull-up resistor between VCC and DATA. Many 3-pin breakout modules already include this resistor.
@@ -199,7 +199,7 @@ In `.env.local`:
 ```env
 NOVA_CLIMATE_ENABLED=true
 NOVA_CLIMATE_SENSOR_TYPE=DHT22
-NOVA_CLIMATE_PIN=D4
+NOVA_CLIMATE_PIN=D17
 ```
 
 With the OLED enabled, Nova shows room temperature and humidity on ready, waiting, thinking, and done screens. You can also ask:

@@ -49,7 +49,7 @@ class Settings:
     oled_refresh_seconds: int = _int("NOVA_OLED_REFRESH_SECONDS", 5)
     climate_enabled: bool = _bool("NOVA_CLIMATE_ENABLED", False)
     climate_sensor_type: str = os.getenv("NOVA_CLIMATE_SENSOR_TYPE", "DHT22")
-    climate_pin: str = os.getenv("NOVA_CLIMATE_PIN", "D4")
+    climate_pin: str = os.getenv("NOVA_CLIMATE_PIN", "D17")
     openweather_api_key: str = os.getenv("OPENWEATHER_API_KEY", "")
     google_api_key: str = os.getenv("GOOGLE_API_KEY", "")
     google_search_engine_id: str = os.getenv("GOOGLE_SEARCH_ENGINE_ID", "")

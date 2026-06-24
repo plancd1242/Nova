@@ -78,7 +78,7 @@ Current target sensor:
 
 - DHT22/AM2302 temperature and humidity sensor.
 - VCC to physical pin 1, 3.3V.
-- DATA/OUT to physical pin 7, GPIO4.
+- DATA/OUT to physical pin 11, GPIO17.
 - GND to physical pin 9, ground.
 - Bare 4-pin sensors need a 10k pull-up resistor between VCC and DATA.
 
