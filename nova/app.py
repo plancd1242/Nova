@@ -124,6 +124,26 @@ class NovaApp:
         self.led(mode)
         self.oled(mode, extra_lines)
 
+    def start_oled_refresh(self) -> None:
+        try:
+            from nova import oled as oled_module
+
+            start_auto_refresh = getattr(oled_module, "start_auto_refresh", None)
+            if callable(start_auto_refresh):
+                start_auto_refresh()
+        except Exception:
+            return
+
+    def stop_oled_refresh(self) -> None:
+        try:
+            from nova import oled as oled_module
+
+            stop_auto_refresh = getattr(oled_module, "stop_auto_refresh", None)
+            if callable(stop_auto_refresh):
+                stop_auto_refresh()
+        except Exception:
+            return
+
     # ------------------------------------------------------------
     # System check
     # ------------------------------------------------------------
@@ -567,17 +587,21 @@ class NovaApp:
 
     def run_typed(self) -> None:
         self.status_display("ready")
+        self.start_oled_refresh()
         self.say("Nova is online. Type a command.")
 
-        while self.state.running:
-            try:
-                command = input("You: ").strip()
-            except KeyboardInterrupt:
-                print()
-                self.say("Nova is shutting down.")
-                break
+        try:
+            while self.state.running:
+                try:
+                    command = input("You: ").strip()
+                except KeyboardInterrupt:
+                    print()
+                    self.say("Nova is shutting down.")
+                    break
 
-            answer = self.handle_command(command)
-            self.say(answer)
+                answer = self.handle_command(command)
+                self.say(answer)
 
-        self.status_display("off")
+            self.status_display("off")
+        finally:
+            self.stop_oled_refresh()

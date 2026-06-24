@@ -46,6 +46,7 @@ class Settings:
     oled_width: int = _int("NOVA_OLED_WIDTH", 128)
     oled_height: int = _int("NOVA_OLED_HEIGHT", 64)
     oled_i2c_address: int = _int("NOVA_OLED_I2C_ADDRESS", 0x3C)
+    oled_refresh_seconds: int = _int("NOVA_OLED_REFRESH_SECONDS", 5)
     climate_enabled: bool = _bool("NOVA_CLIMATE_ENABLED", False)
     climate_sensor_type: str = os.getenv("NOVA_CLIMATE_SENSOR_TYPE", "DHT22")
     climate_pin: str = os.getenv("NOVA_CLIMATE_PIN", "D4")

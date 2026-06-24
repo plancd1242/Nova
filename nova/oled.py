@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import threading
 from typing import Optional
 
 from nova.config import settings
@@ -36,6 +37,11 @@ class OledDisplay:
         self.device: Optional[object] = None
         self.image_tools: Optional[tuple[object, object, object]] = None
         self.hardware_ready = False
+        self.current_mode = "ready"
+        self.current_extra_lines: tuple[str, ...] | None = None
+        self._lock = threading.Lock()
+        self._stop_refresh = threading.Event()
+        self._refresh_thread: threading.Thread | None = None
         if settings.oled_enabled:
             self._try_hardware()
 
@@ -63,35 +69,77 @@ class OledDisplay:
         if not self.hardware_ready or self.device is None:
             print("[OLED] clear")
             return
-        self.device.fill(0)
-        self.device.show()
+        with self._lock:
+            self.device.fill(0)
+            self.device.show()
 
     def status(self, mode: str, extra_lines: list[str] | tuple[str, ...] | None = None) -> None:
+        self.current_mode = mode
+        self.current_extra_lines = tuple(extra_lines) if extra_lines else None
+        self._draw(mode, self.current_extra_lines, print_fallback=True)
+
+    def refresh(self) -> None:
+        self._draw(self.current_mode, self.current_extra_lines, print_fallback=False)
+
+    def start_auto_refresh(self, refresh_seconds: int | None = None) -> None:
+        if not settings.oled_enabled or not self.hardware_ready:
+            return
+        if self._refresh_thread and self._refresh_thread.is_alive():
+            return
+
+        interval = max(1, refresh_seconds or settings.oled_refresh_seconds)
+        self._stop_refresh.clear()
+        self._refresh_thread = threading.Thread(
+            target=self._refresh_loop,
+            args=(interval,),
+            daemon=True,
+            name="nova-oled-refresh",
+        )
+        self._refresh_thread.start()
+
+    def stop_auto_refresh(self) -> None:
+        self._stop_refresh.set()
+        if self._refresh_thread and self._refresh_thread.is_alive():
+            self._refresh_thread.join(timeout=1)
+        self._refresh_thread = None
+
+    def _refresh_loop(self, interval: int) -> None:
+        while not self._stop_refresh.wait(interval):
+            self.refresh()
+
+    def _draw(
+        self,
+        mode: str,
+        extra_lines: list[str] | tuple[str, ...] | None = None,
+        print_fallback: bool = True,
+    ) -> None:
         screen = STATUS_SCREENS.get(mode, STATUS_SCREENS["ready"])
         lines = self._build_lines(screen, extra_lines)
 
         if not self.hardware_ready or self.device is None or self.image_tools is None:
-            printable = " | ".join(line for line in (screen.title, *lines) if line)
-            print(f"[OLED] {printable}")
+            if print_fallback:
+                printable = " | ".join(line for line in (screen.title, *lines) if line)
+                print(f"[OLED] {printable}")
             return
 
         Image, ImageDraw, ImageFont = self.image_tools
-        image = Image.new("1", (settings.oled_width, settings.oled_height))
-        draw = ImageDraw.Draw(image)
-        font = ImageFont.load_default()
+        with self._lock:
+            image = Image.new("1", (settings.oled_width, settings.oled_height))
+            draw = ImageDraw.Draw(image)
+            font = ImageFont.load_default()
 
-        draw.text((0, 0), screen.face, font=font, fill=255)
-        draw.text((42, 0), datetime.now().strftime("%I:%M %p").lstrip("0"), font=font, fill=255)
-        draw.line((0, 12, settings.oled_width - 1, 12), fill=255)
-        draw.text((0, 16), screen.title[:21], font=font, fill=255)
+            draw.text((0, 0), screen.face, font=font, fill=255)
+            draw.text((42, 0), datetime.now().strftime("%I:%M %p").lstrip("0"), font=font, fill=255)
+            draw.line((0, 12, settings.oled_width - 1, 12), fill=255)
+            draw.text((0, 16), screen.title[:21], font=font, fill=255)
 
-        y = 29
-        for line in lines[:4]:
-            draw.text((0, y), str(line)[:21], font=font, fill=255)
-            y += 9
+            y = 29
+            for line in lines[:4]:
+                draw.text((0, y), str(line)[:21], font=font, fill=255)
+                y += 9
 
-        self.device.image(image)
-        self.device.show()
+            self.device.image(image)
+            self.device.show()
 
     def _build_lines(
         self,
@@ -133,3 +181,15 @@ def set_mode(mode: str) -> None:
 
 def clear() -> None:
     get_display().clear()
+
+
+def refresh() -> None:
+    get_display().refresh()
+
+
+def start_auto_refresh(refresh_seconds: int | None = None) -> None:
+    get_display().start_auto_refresh(refresh_seconds)
+
+
+def stop_auto_refresh() -> None:
+    get_display().stop_auto_refresh()

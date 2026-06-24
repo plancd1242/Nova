@@ -161,9 +161,12 @@ NOVA_OLED_ENABLED=true
 NOVA_OLED_WIDTH=128
 NOVA_OLED_HEIGHT=64
 NOVA_OLED_I2C_ADDRESS=60
+NOVA_OLED_REFRESH_SECONDS=5
 ```
 
 `60` is decimal for the common `0x3C` SSD1306 I2C address. If `i2cdetect -y 1` shows `3d`, use `NOVA_OLED_I2C_ADDRESS=61`.
+
+Nova refreshes the OLED automatically while it is running, so the clock and sensor readings keep updating even when no command is being entered. `NOVA_OLED_REFRESH_SECONDS=5` is a good default for the DHT22 because the sensor should not be polled too aggressively.
 
 If the OLED screen, I2C bus, or Python display libraries are missing, Nova prints messages like:
 
