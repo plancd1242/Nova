@@ -211,6 +211,41 @@ humidity
 climate
 ```
 
+## Backup Manager
+
+Nova creates ZIP backups of local data, including notes, joke history, account files, settings, timers, alarms, and future JSON data files stored in `data/`.
+
+Default settings:
+
+```env
+NOVA_BACKUP_ENABLED=true
+NOVA_BACKUP_TIME=00:00
+NOVA_BACKUP_KEEP_DAYS=30
+```
+
+Backups are stored in `backups/` with readable names such as:
+
+```text
+backup_2026-06-17_12-00_AM.zip
+```
+
+Nova starts a daily backup scheduler when the typed app starts. Manual commands include:
+
+```text
+backup now
+create backup
+make a backup
+show backups
+list backup history
+backup status
+restore latest backup
+set backup time to 12:00 AM
+change backup cleanup days to 30
+clean backups
+```
+
+Restore is intentionally cautious. Nova validates the ZIP file and creates a safety backup before restoring files into `data/`.
+
 ## API Keys
 
 All keys go in `.env.local`.

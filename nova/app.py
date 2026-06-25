@@ -30,9 +30,16 @@ class NovaApp:
     def __init__(self) -> None:
         self.state = NovaState()
         self.name = "Nova"
+        self.backup_scheduler: object | None = None
 
         self._load_env_file(".env.local")
         self._load_env_file(".env")
+
+        from nova.backups import BackupManager
+        from nova.phrases import get_database
+
+        self.backups = BackupManager()
+        self.phrases = get_database()
 
     # ------------------------------------------------------------
     # Basic helpers
@@ -145,6 +152,50 @@ class NovaApp:
         except Exception:
             return
 
+    def start_backup_scheduler(self) -> None:
+        try:
+            from apscheduler.schedulers.background import BackgroundScheduler
+
+            backup_settings = self.backups.settings()
+            if not backup_settings.get("enabled", True):
+                return
+            hour, minute = self._parse_hhmm(str(backup_settings.get("time", "00:00")))
+            scheduler = BackgroundScheduler(timezone=os.getenv("NOVA_TIMEZONE", "America/Detroit"))
+            scheduler.add_job(
+                self._scheduled_backup,
+                "cron",
+                hour=hour,
+                minute=minute,
+                id="nova_daily_backup",
+                replace_existing=True,
+            )
+            scheduler.start()
+            self.backup_scheduler = scheduler
+        except Exception as exc:
+            print(f"[BACKUP] scheduler unavailable: {exc}")
+
+    def stop_backup_scheduler(self) -> None:
+        scheduler = self.backup_scheduler
+        if scheduler is None:
+            return
+        shutdown = getattr(scheduler, "shutdown", None)
+        if callable(shutdown):
+            try:
+                shutdown(wait=False)
+            except Exception:
+                pass
+        self.backup_scheduler = None
+
+    def _scheduled_backup(self) -> None:
+        try:
+            self.status_display("backup", ("Automatic backup",))
+            print(f"[BACKUP] {self.backups.create_backup(reason='scheduled')}")
+        except Exception as exc:
+            print(f"[BACKUP] scheduled backup failed: {exc}")
+        finally:
+            if not self.is_private():
+                self.status_display("ready")
+
     # ------------------------------------------------------------
     # System check
     # ------------------------------------------------------------
@@ -203,6 +254,9 @@ class NovaApp:
             checks.append("Climate sensor enabled: DHT sensor configured")
         else:
             checks.append("Climate sensor disabled: unavailable fallback ready")
+
+        checks.append(f"Backup: {self.backups.status()}")
+        checks.append(f"Phrase database: {self.phrases.count()} generated phrases")
 
         return "\n".join(checks)
 
@@ -279,9 +333,22 @@ class NovaApp:
 
         # Normal commands
         self.status_display("thinking")
+        route = self.phrases.match(lower)
 
         try:
-            if self._matches(lower, ["hello", "hi nova", "hi"]):
+            if route and route.category.startswith("backup_"):
+                return self._backup_command(route.category, command)
+
+            if route and route.category == "sleep":
+                return self._sleep_command()
+
+            if route and route.category == "lockdown":
+                return self._lockdown_command()
+
+            if route and route.category == "oled":
+                return self._oled_command(command)
+
+            if (route and route.category == "greeting") or self._matches(lower, ["hello", "hi nova", "hi"]):
                 return random.choice(
                     [
                         "Hello Caleb.",
@@ -299,16 +366,16 @@ class NovaApp:
             if self._looks_like_climate(lower):
                 return self._climate_command()
 
-            if "joke" in lower:
+            if (route and route.category == "joke") or "joke" in lower:
                 return self._joke_command()
 
             if "spell" in lower or "how do you spell" in lower:
                 return self._spell_command(command)
 
-            if "define" in lower or "what does" in lower or "definition" in lower:
+            if (route and route.category == "dictionary") or "define" in lower or "what does" in lower or "definition" in lower:
                 return self._definition_command(command)
 
-            if "weather" in lower or "temperature" in lower or "rain" in lower:
+            if (route and route.category == "weather") or "weather" in lower or "temperature" in lower or "rain" in lower:
                 return self._weather_command(command)
 
             if "spotify" in lower or "music" in lower or lower.startswith("play "):
@@ -345,6 +412,12 @@ class NovaApp:
             return int(match.group(1))
         return None
 
+    def _parse_hhmm(self, value: str) -> tuple[int, int]:
+        match = re.match(r"^([01]?\d|2[0-3]):([0-5]\d)$", value.strip())
+        if not match:
+            return (0, 0)
+        return (int(match.group(1)), int(match.group(2)))
+
     def _looks_like_climate(self, text: str) -> bool:
         if any(word in text for word in ["weather", "forecast", "outside", "rain"]):
             return False
@@ -368,6 +441,40 @@ class NovaApp:
         now = _dt.datetime.now()
         return f"Today is {now.strftime('%A, %B %d, %Y')}."
 
+    def _backup_command(self, category: str, command: str) -> str:
+        try:
+            from nova.phrases import find_number
+
+            if category == "backup_now":
+                self.status_display("backup", ("Manual backup",))
+                return self.backups.create_backup(reason="manual")
+            if category == "backup_list":
+                return self.backups.history()
+            if category == "backup_status":
+                return self.backups.status()
+            if category == "backup_restore_latest":
+                self.status_display("backup", ("Restoring latest",))
+                return self.backups.restore_latest()
+            if category == "backup_restore":
+                self.status_display("backup", ("Restore requested",))
+                return "Tell me which backup filename to restore, or say restore latest backup."
+            if category == "backup_cleanup":
+                removed = self.backups.cleanup_old_backups()
+                return f"Backup cleanup complete. Removed {removed} old backup{'s' if removed != 1 else ''}."
+            if category == "backup_set_time":
+                result = self.backups.set_time(command)
+                self.stop_backup_scheduler()
+                self.start_backup_scheduler()
+                return result
+            if category == "backup_set_keep_days":
+                days = find_number(command)
+                if days is None:
+                    return "Tell me how many days of backups to keep."
+                return self.backups.set_keep_days(days)
+        except Exception as exc:
+            return f"Backup manager could not complete that: {exc}"
+        return "I heard a backup command, but I do not know that backup action yet."
+
     def _climate_command(self) -> str:
         try:
             from nova import climate
@@ -375,6 +482,26 @@ class NovaApp:
             return climate.climate_report()
         except Exception:
             return "The temperature and humidity sensor is not connected yet."
+
+    def _sleep_command(self) -> str:
+        self.status_display("sleeping", ("Quiet operation",))
+        return "Okay. Sleep mode is on the roadmap; I dimmed my status display for now."
+
+    def _lockdown_command(self) -> str:
+        self.status_display("lockdown", ("Security active",))
+        return "Lockdown mode is not fully connected yet, but I am showing the lockdown status."
+
+    def _oled_command(self, command: str) -> str:
+        lower = command.lower()
+        if "refresh" in lower or "update" in lower:
+            try:
+                from nova import oled
+
+                oled.refresh()
+                return "I refreshed the OLED display."
+            except Exception:
+                return "The OLED display is not available right now."
+        return "The OLED display is connected to Nova status, time, temperature, and humidity."
 
     def _joke_command(self) -> str:
         try:
@@ -589,6 +716,7 @@ class NovaApp:
     def run_typed(self) -> None:
         self.status_display("ready")
         self.start_oled_refresh()
+        self.start_backup_scheduler()
         self.say("Nova is online. Type a command.")
 
         try:
@@ -606,3 +734,4 @@ class NovaApp:
             self.status_display("off")
         finally:
             self.stop_oled_refresh()
+            self.stop_backup_scheduler()

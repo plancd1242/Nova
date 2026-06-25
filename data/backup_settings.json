@@ -1,0 +1,5 @@
+{
+  "enabled": true,
+  "keep_days": 30,
+  "time": "00:00"
+}

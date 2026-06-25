@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
 SOUNDS_DIR = ROOT_DIR / "sounds"
+BACKUP_DIR = ROOT_DIR / "backups"
 
 load_dotenv(ROOT_DIR / ".env.local")
 load_dotenv(ROOT_DIR / ".env")
@@ -50,6 +51,9 @@ class Settings:
     climate_enabled: bool = _bool("NOVA_CLIMATE_ENABLED", False)
     climate_sensor_type: str = os.getenv("NOVA_CLIMATE_SENSOR_TYPE", "DHT22")
     climate_pin: str = os.getenv("NOVA_CLIMATE_PIN", "D17")
+    backup_enabled: bool = _bool("NOVA_BACKUP_ENABLED", True)
+    backup_time: str = os.getenv("NOVA_BACKUP_TIME", "00:00")
+    backup_keep_days: int = _int("NOVA_BACKUP_KEEP_DAYS", 30)
     openweather_api_key: str = os.getenv("OPENWEATHER_API_KEY", "")
     google_api_key: str = os.getenv("GOOGLE_API_KEY", "")
     google_search_engine_id: str = os.getenv("GOOGLE_SEARCH_ENGINE_ID", "")

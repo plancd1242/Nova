@@ -149,6 +149,8 @@ Backups protect Nova's data.
 Schedule:
 
 - Daily at midnight.
+- Configurable with `NOVA_BACKUP_TIME`.
+- Old backups are cleaned after a configurable number of days.
 
 Included data:
 
@@ -157,6 +159,14 @@ Included data:
 - Accounts
 - Settings
 - Data files
+
+Current implementation:
+
+- `nova/backups.py` owns backup creation, history, cleanup, settings, and restore.
+- Backups are ZIP files stored in `backups/`.
+- Restore validates archive paths and creates a safety backup before writing restored files.
+- The app scheduler runs daily backups while Nova is running.
+- OLED and LED can show `backup` status during manual, scheduled, and restore actions.
 
 Example backup name:
 

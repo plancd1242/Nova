@@ -14,6 +14,8 @@ DEFAULT_FILES: dict[str, Any] = {
         "users": {settings.default_user: {"alarms": [], "preferences": {}}},
     },
     "joke_history.json": {"users": {}},
+    "backup_settings.json": {"enabled": True, "time": "00:00", "keep_days": 30},
+    "backup_history.json": {"backups": []},
     "alarms.json": {"alarms": []},
     "timers.json": {"timers": []},
     "notes.json": {"notes": []},
