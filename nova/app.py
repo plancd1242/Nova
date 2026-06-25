@@ -38,6 +38,7 @@ class NovaApp:
     # Basic helpers
     # ------------------------------------------------------------
 
+
     def _load_env_file(self, path: str) -> None:
         """
         Super simple .env loader.
