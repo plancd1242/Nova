@@ -22,7 +22,7 @@ class ClimateReading:
 
     def oled_lines(self) -> tuple[str, str]:
         if not self.ok or self.temperature_f is None or self.humidity_percent is None:
-            return ("Temp: --.- F", "Humidity: -- %")
+            return ("Temp: N/A", "Humidity: N/A")
         return (
             f"Temp: {self.temperature_f:.1f} F",
             f"Humidity: {self.humidity_percent:.0f} %",

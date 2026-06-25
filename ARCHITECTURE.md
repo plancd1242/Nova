@@ -72,6 +72,35 @@ Planned states:
 
 The OLED system should be expandable.
 
+Current dashboard layout:
+
+- Top: small pixel Nova face, time, and Wi-Fi signal bars.
+- Middle: temperature and humidity.
+- Lower: Wi-Fi text, voltage, and light level.
+- Bottom: current Nova mode.
+
+Special screens:
+
+- Backup animation and Backup Complete.
+- Lockdown warning screen.
+- Privacy lock screen.
+- Sleep face with Zzz.
+
+Missing sensors must display `N/A` and must not crash Nova.
+
+Supporting modules:
+
+- `nova/oled.py`: display rendering and refresh loop.
+- `nova/oled_status.py`: lightweight OLED status summary.
+- `nova/sensor_manager.py`: combined sensor snapshot for OLED and commands.
+- `nova/wifi_status.py`: Wi-Fi detection.
+- `nova/light_sensor.py`: BH1750 detection.
+- `nova/voltage_sensor.py`: voltage sensor placeholder and future ADC integration point.
+- `nova/hardware.py`: enabled/disabled hardware summary.
+- `nova/system_status.py`: aggregate status for app commands.
+- `nova/notifications.py`: notification history.
+- `nova/lockdown.py`, `nova/sleep.py`, and `nova/privacy.py`: operating mode managers.
+
 ## Temperature And Humidity Sensor
 
 Current target sensor:

@@ -211,6 +211,54 @@ humidity
 climate
 ```
 
+## OLED Dashboard
+
+Nova's OLED dashboard keeps the existing status API and adds a small pixel Nova face, time, room temperature, humidity, Wi-Fi signal status, voltage, light level, and current operating mode. Missing or disabled sensors show `N/A` instead of crashing Nova.
+
+Special OLED screens are available for:
+
+- Backup, including a simple downward arrow animation while saving.
+- Backup Complete.
+- Privacy Mode.
+- Sleep Mode.
+- Lockdown Mode.
+
+Optional BH1750 light sensor settings:
+
+```env
+NOVA_LIGHT_ENABLED=false
+NOVA_LIGHT_I2C_ADDRESS=35
+```
+
+`35` is decimal for the common `0x23` BH1750 address.
+
+Optional voltage sensor support is reserved for the future:
+
+```env
+NOVA_VOLTAGE_ENABLED=false
+```
+
+## Hardware And Status Modules
+
+Nova keeps hardware and status features in separate modules so missing parts do not crash the assistant.
+
+- `nova/sensor_manager.py` gathers climate, Wi-Fi, voltage, and light readings for OLED and status reports.
+- `nova/hardware.py` reports whether optional hardware systems are enabled or disabled.
+- `nova/wifi_status.py`, `nova/light_sensor.py`, and `nova/voltage_sensor.py` safely detect individual hardware capabilities.
+- `nova/lockdown.py`, `nova/sleep.py`, and `nova/privacy.py` manage operating modes.
+- `nova/notifications.py` stores notification history.
+- `nova/system_status.py` aggregates Nova's overall status.
+
+Commands include:
+
+```text
+hardware status
+sensor status
+system status
+show notifications
+clear notifications
+```
+
 ## Backup Manager
 
 Nova creates ZIP backups of local data, including notes, joke history, account files, settings, timers, alarms, and future JSON data files stored in `data/`.

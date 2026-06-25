@@ -1,3 +1,5 @@
 {
-  "privacy_until": null
+  "lockdown_active": false,
+  "privacy_until": null,
+  "sleep_active": false
 }

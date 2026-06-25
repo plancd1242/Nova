@@ -8,7 +8,7 @@ from nova.config import DATA_DIR, settings
 
 
 DEFAULT_FILES: dict[str, Any] = {
-    "settings.json": {"privacy_until": None},
+    "settings.json": {"privacy_until": None, "lockdown_active": False, "sleep_active": False},
     "users.json": {
         "current_user": settings.default_user,
         "users": {settings.default_user: {"alarms": [], "preferences": {}}},
@@ -16,6 +16,7 @@ DEFAULT_FILES: dict[str, Any] = {
     "joke_history.json": {"users": {}},
     "backup_settings.json": {"enabled": True, "time": "00:00", "keep_days": 30},
     "backup_history.json": {"backups": []},
+    "notifications.json": {"notifications": []},
     "alarms.json": {"alarms": []},
     "timers.json": {"timers": []},
     "notes.json": {"notes": []},

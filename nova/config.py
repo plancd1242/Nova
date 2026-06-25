@@ -6,6 +6,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from nova.config_helpers import env_bool, env_float, env_int
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
 SOUNDS_DIR = ROOT_DIR / "sounds"
@@ -16,17 +18,11 @@ load_dotenv(ROOT_DIR / ".env")
 
 
 def _bool(name: str, default: bool = False) -> bool:
-    value = os.getenv(name)
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
+    return env_bool(name, default)
 
 
 def _int(name: str, default: int) -> int:
-    try:
-        return int(os.getenv(name, str(default)))
-    except ValueError:
-        return default
+    return env_int(name, default)
 
 
 @dataclass(frozen=True)
@@ -51,6 +47,19 @@ class Settings:
     climate_enabled: bool = _bool("NOVA_CLIMATE_ENABLED", False)
     climate_sensor_type: str = os.getenv("NOVA_CLIMATE_SENSOR_TYPE", "DHT22")
     climate_pin: str = os.getenv("NOVA_CLIMATE_PIN", "D17")
+    light_enabled: bool = _bool("NOVA_LIGHT_ENABLED", False)
+    light_i2c_address: int = _int("NOVA_LIGHT_I2C_ADDRESS", 0x23)
+    voltage_enabled: bool = _bool("NOVA_VOLTAGE_ENABLED", False)
+    voltage_channel: int = _int("NOVA_VOLTAGE_CHANNEL", 0)
+    voltage_scale: float = env_float("NOVA_VOLTAGE_SCALE", 5.0)
+    lockdown_enabled: bool = _bool("NOVA_LOCKDOWN_ENABLED", True)
+    lockdown_motion_enabled: bool = _bool("NOVA_LOCKDOWN_MOTION_ENABLED", False)
+    lockdown_camera_enabled: bool = _bool("NOVA_LOCKDOWN_CAMERA_ENABLED", False)
+    lockdown_alert_sound: str = os.getenv("NOVA_LOCKDOWN_ALERT_SOUND", "")
+    sleep_enabled: bool = _bool("NOVA_SLEEP_ENABLED", True)
+    sleep_oled_dim: bool = _bool("NOVA_SLEEP_OLED_DIM", True)
+    notification_enabled: bool = _bool("NOVA_NOTIFICATIONS_ENABLED", True)
+    notification_history_limit: int = _int("NOVA_NOTIFICATION_HISTORY_LIMIT", 50)
     backup_enabled: bool = _bool("NOVA_BACKUP_ENABLED", True)
     backup_time: str = os.getenv("NOVA_BACKUP_TIME", "00:00")
     backup_keep_days: int = _int("NOVA_BACKUP_KEEP_DAYS", 30)

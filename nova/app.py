@@ -36,10 +36,22 @@ class NovaApp:
         self._load_env_file(".env")
 
         from nova.backups import BackupManager
+        from nova.hardware import HardwareManager
+        from nova.lockdown import LockdownManager
+        from nova.notifications import NotificationManager
         from nova.phrases import get_database
+        from nova.sensor_manager import get_sensor_manager
+        from nova.sleep import SleepManager
+        from nova.system_status import SystemStatusManager
 
         self.backups = BackupManager()
+        self.hardware = HardwareManager()
+        self.lockdown = LockdownManager()
+        self.notifications = NotificationManager()
         self.phrases = get_database()
+        self.sensor_manager = get_sensor_manager()
+        self.sleep = SleepManager()
+        self.system_status = SystemStatusManager()
 
     # ------------------------------------------------------------
     # Basic helpers
@@ -256,6 +268,8 @@ class NovaApp:
             checks.append("Climate sensor disabled: unavailable fallback ready")
 
         checks.append(f"Backup: {self.backups.status()}")
+        checks.append(self.hardware.report())
+        checks.append(f"Sensors: {self.sensor_manager.status_report()}")
         checks.append(f"Phrase database: {self.phrases.count()} generated phrases")
 
         return "\n".join(checks)
@@ -325,6 +339,8 @@ class NovaApp:
 
         if "wake up" in lower or "stop private" in lower:
             self.state.private_until = None
+            self.sleep.deactivate()
+            self.lockdown.deactivate()
             self.status_display("ready")
             return "Okay. I am listening again."
 
@@ -334,19 +350,35 @@ class NovaApp:
         # Normal commands
         self.status_display("thinking")
         route = self.phrases.match(lower)
+        keep_display_mode = False
 
         try:
             if route and route.category.startswith("backup_"):
+                keep_display_mode = route.category in {"backup_now", "backup_restore_latest"}
                 return self._backup_command(route.category, command)
 
             if route and route.category == "sleep":
+                keep_display_mode = True
                 return self._sleep_command()
 
             if route and route.category == "lockdown":
+                keep_display_mode = True
                 return self._lockdown_command()
 
             if route and route.category == "oled":
                 return self._oled_command(command)
+
+            if "hardware status" in lower or "hardware report" in lower:
+                return self.hardware.report()
+
+            if "sensor status" in lower or "sensor report" in lower:
+                return self.sensor_manager.status_report()
+
+            if "system status" in lower or "system report" in lower:
+                return self.system_status.report().summary
+
+            if "notification" in lower or "notifications" in lower:
+                return self._notification_command(command)
 
             if (route and route.category == "greeting") or self._matches(lower, ["hello", "hi nova", "hi"]):
                 return random.choice(
@@ -396,7 +428,7 @@ class NovaApp:
             return "I do not know that command yet."
 
         finally:
-            if not self.is_private():
+            if not keep_display_mode and not self.is_private():
                 self.status_display("done")
 
     # ------------------------------------------------------------
@@ -447,14 +479,18 @@ class NovaApp:
 
             if category == "backup_now":
                 self.status_display("backup", ("Manual backup",))
-                return self.backups.create_backup(reason="manual")
+                result = self.backups.create_backup(reason="manual")
+                self.status_display("backup_complete", ("Backup Complete",))
+                return result
             if category == "backup_list":
                 return self.backups.history()
             if category == "backup_status":
                 return self.backups.status()
             if category == "backup_restore_latest":
                 self.status_display("backup", ("Restoring latest",))
-                return self.backups.restore_latest()
+                result = self.backups.restore_latest()
+                self.status_display("backup_complete", ("Backup Complete",))
+                return result
             if category == "backup_restore":
                 self.status_display("backup", ("Restore requested",))
                 return "Tell me which backup filename to restore, or say restore latest backup."
@@ -484,12 +520,22 @@ class NovaApp:
             return "The temperature and humidity sensor is not connected yet."
 
     def _sleep_command(self) -> str:
+        message = self.sleep.activate()
         self.status_display("sleeping", ("Quiet operation",))
-        return "Okay. Sleep mode is on the roadmap; I dimmed my status display for now."
+        return message
 
     def _lockdown_command(self) -> str:
+        message = self.lockdown.activate()
         self.status_display("lockdown", ("Security active",))
-        return "Lockdown mode is not fully connected yet, but I am showing the lockdown status."
+        return message
+
+    def _notification_command(self, command: str) -> str:
+        lower = command.lower()
+        if "clear" in lower:
+            return self.notifications.clear()
+        if "show" in lower or "list" in lower or "history" in lower:
+            return self.notifications.history()
+        return self.notifications.notify("Nova note", command, level="info")
 
     def _oled_command(self, command: str) -> str:
         lower = command.lower()
