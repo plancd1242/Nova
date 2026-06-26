@@ -10,6 +10,7 @@ class LedRing:
     def __init__(self) -> None:
         self.pixel_strip: Optional[object] = None
         self.hardware_ready = False
+        self.last_error = ""
         if settings.led_enabled:
             self._try_hardware()
 
@@ -26,7 +27,8 @@ class LedRing:
             self.pixel_strip = (strip, Color)
             self.hardware_ready = True
         except Exception as exc:
-            print(f"[LED] hardware unavailable, using text fallback: {exc}")
+            self.last_error = str(exc)
+            print(f"[LED] hardware unavailable, using text fallback: {self._friendly_error()}")
 
     def _color_all(self, red: int, green: int, blue: int) -> None:
         if not self.hardware_ready or not self.pixel_strip:
@@ -88,6 +90,16 @@ class LedRing:
     def off(self) -> None:
         self.status("off")
 
+    def _friendly_error(self) -> str:
+        if "mailbox" in self.last_error.lower() or "operation not permitted" in self.last_error.lower():
+            return (
+                f"{self.last_error}. WS281x LEDs on GPIO{settings.led_pin} need elevated GPIO/mailbox access. "
+                "Run Nova with the virtualenv Python under sudo, for example: sudo .venv/bin/python main.py"
+            )
+        if "no module named" in self.last_error.lower() or "import" in self.last_error.lower():
+            return f"{self.last_error}. Install the LED package in the Python environment running Nova: pip install rpi_ws281x"
+        return self.last_error or "unknown LED hardware error"
+
 
 _ring: LedRing | None = None
 
@@ -124,6 +136,10 @@ def test_led() -> str:
     if not settings.led_enabled:
         return "LED ring is disabled in configuration."
     if not ring.hardware_ready:
-        return "LED ring hardware is not ready. Check rpi_ws281x install, sudo/root permissions, GPIO pin, and LED power wiring."
+        detail = ring._friendly_error()
+        return (
+            "LED ring hardware is not ready. "
+            f"{detail} Check GPIO pin, DIN/DOUT direction, LED power, and common ground."
+        )
     ring.status("ready")
     return f"LED ring is ready on GPIO{settings.led_pin} with {settings.led_count} LEDs."

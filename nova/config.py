@@ -4,7 +4,10 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv as _python_dotenv_load
+except Exception:
+    _python_dotenv_load = None
 
 from nova.config_helpers import env_bool, env_float, env_int
 
@@ -13,8 +16,29 @@ DATA_DIR = ROOT_DIR / "data"
 SOUNDS_DIR = ROOT_DIR / "sounds"
 BACKUP_DIR = ROOT_DIR / "backups"
 
-load_dotenv(ROOT_DIR / ".env.local")
-load_dotenv(ROOT_DIR / ".env")
+
+def _load_env_file(path: Path) -> None:
+    if _python_dotenv_load is not None:
+        _python_dotenv_load(path, override=False)
+        return
+    if not path.exists():
+        return
+    try:
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+    except Exception:
+        pass
+
+
+_load_env_file(ROOT_DIR / ".env.local")
+_load_env_file(ROOT_DIR / ".env")
 
 
 def _bool(name: str, default: bool = False) -> bool:

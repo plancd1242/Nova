@@ -117,7 +117,13 @@ Nova tries to use `rpi_ws281x` on Raspberry Pi. If that package or the hardware 
 [LED] blue listening
 ```
 
-Using GPIO18/PWM for real WS2812B LEDs may require running with `sudo` on Raspberry Pi.
+Using GPIO18/PWM for real WS2812B LEDs may require elevated mailbox/GPIO access on Raspberry Pi. If `python main.py` shows `Failed to create mailbox device`, run Nova with the project virtualenv under sudo:
+
+```bash
+sudo .venv/bin/python main.py
+```
+
+Avoid `sudo python main.py` unless root's Python has all Nova dependencies installed.
 
 Optional hardware packages for later:
 
@@ -444,4 +450,5 @@ It checks voice fallback, LED fallback/hardware, storage files, API config, and 
 - Use a resistor around 330 ohm to 470 ohm on the WS2812B data line.
 - Use a power setup appropriate for your LED ring.
 - GPIO18/PWM is common for WS2812B examples.
+- If WS2812B setup reports `Failed to create mailbox device`, run `sudo .venv/bin/python main.py` from the project folder.
 - Real microphone and wake-word support are intentionally placeholders in the MVP so typed commands work first.
