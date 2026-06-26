@@ -67,6 +67,8 @@ class Settings:
     volume_rotary_dt_pin: str = _env_first("NOVA_GPIO_ROTARY_DT_PIN", "NOVA_VOLUME_ROTARY_DT_PIN", default="D6")
     volume_rotary_sw_pin: str = _env_first("NOVA_GPIO_ROTARY_SW_PIN", "NOVA_ROTARY_SW_PIN", "NOVA_VOLUME_ROTARY_SW_PIN")
     volume_rotary_mute_enabled: bool = _bool("NOVA_ROTARY_MUTE_ENABLED", True)
+    volume_rotary_step: float = env_float("NOVA_VOLUME_ROTARY_STEP", 2.5)
+    volume_rotary_reverse: bool = _bool("NOVA_VOLUME_ROTARY_REVERSE", False)
     oled_enabled: bool = _bool("NOVA_OLED_ENABLED", False)
     oled_width: int = _int("NOVA_OLED_WIDTH", 128)
     oled_height: int = _int("NOVA_OLED_HEIGHT", 64)

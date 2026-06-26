@@ -43,6 +43,7 @@ class VolumeManager:
         self._stop_monitor = threading.Event()
         self._monitor_thread: threading.Thread | None = None
         self._hardware_inputs: list[object] = []
+        self._rotary_step_remainder = 0.0
         self._ensure_settings()
 
     def state(self) -> VolumeState:
@@ -207,17 +208,16 @@ class VolumeManager:
         return input_pin
 
     def _encoder_loop(self, clk: object, dt: object, button: Optional[object]) -> None:
-        last_clk = bool(clk.value)
+        last_state = (bool(clk.value), bool(dt.value))
         was_pressed = False
-        while not self._stop_monitor.wait(0.03):
+        while not self._stop_monitor.wait(0.01):
             try:
-                current_clk = bool(clk.value)
-                if current_clk != last_clk:
-                    if bool(dt.value) != current_clk:
-                        self.adjust(2)
-                    else:
-                        self.adjust(-2)
-                    last_clk = current_clk
+                current_state = (bool(clk.value), bool(dt.value))
+                if current_state != last_state:
+                    direction = self._rotary_direction(last_state, current_state)
+                    if direction:
+                        self._apply_rotary_turn(direction)
+                    last_state = current_state
 
                 if button is not None:
                     pressed = not bool(button.value)
@@ -228,6 +228,34 @@ class VolumeManager:
                         time.sleep(0.18)
             except Exception:
                 break
+
+    def _rotary_direction(self, previous: tuple[bool, bool], current: tuple[bool, bool]) -> int:
+        clockwise_steps = {
+            ((False, False), (False, True)),
+            ((False, True), (True, True)),
+            ((True, True), (True, False)),
+            ((True, False), (False, False)),
+        }
+        counterclockwise_steps = {
+            ((False, False), (True, False)),
+            ((True, False), (True, True)),
+            ((True, True), (False, True)),
+            ((False, True), (False, False)),
+        }
+        transition = (previous, current)
+        if transition in clockwise_steps:
+            return -1 if settings.volume_rotary_reverse else 1
+        if transition in counterclockwise_steps:
+            return 1 if settings.volume_rotary_reverse else -1
+        return 0
+
+    def _apply_rotary_turn(self, direction: int) -> None:
+        self._rotary_step_remainder += direction * max(0.1, settings.volume_rotary_step)
+        delta = int(self._rotary_step_remainder)
+        if delta == 0:
+            return
+        self._rotary_step_remainder -= delta
+        self.adjust(delta)
 
     def _apply_system_volume(self, level: int, muted: bool) -> None:
         percent = 0 if muted else self._percent_for_level(level)
