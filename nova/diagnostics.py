@@ -8,6 +8,8 @@ class Diagnostics:
             return self.oled_status()
         if name in {"led", "led ring", "light ring"}:
             return self.led()
+        if name in {"led pixel", "led first pixel", "first led"}:
+            return self.led_first_pixel()
         if name == "backup screen":
             return self.backup_screen()
         if name == "sleep mode":
@@ -68,6 +70,14 @@ class Diagnostics:
             return led.test_led()
         except Exception as exc:
             return f"LED ring test unavailable: {exc}"
+
+    def led_first_pixel(self) -> str:
+        try:
+            from nova import led
+
+            return led.test_first_pixel()
+        except Exception as exc:
+            return f"LED first-pixel test unavailable: {exc}"
 
     def sleep_mode(self) -> str:
         from nova.sleep import SleepManager

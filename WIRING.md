@@ -109,7 +109,7 @@ If using a bare 4-pin DHT22, add a 10k pull-up resistor between `VCC` and `DATA`
 
 ## LED Ring
 
-Nova's current LED ring setting uses GPIO18, which is commonly used for WS2812B/NeoPixel data.
+Nova is currently configured for one DIYmall 16 LED WS2812B RGB ring. The ring uses 5V power and one addressable data input.
 
 | LED ring pin | Raspberry Pi pin name | Physical pin |
 | --- | --- | ---: |
@@ -120,11 +120,14 @@ Nova's current LED ring setting uses GPIO18, which is commonly used for WS2812B/
 Current config:
 
 ```env
+NOVA_LED_COUNT=16
 NOVA_GPIO_LED_RING_PIN=18
 ```
 
 Notes:
 
+- The ring's 3-pin JST connector should connect to 5V, data input, and ground. Check the board labels before powering it.
+- The data wire must connect to `DIN` / input. The opposite side, if labeled `DOUT`, is for chaining another ring and will not receive data from the Pi.
 - Use a common ground between the LED ring power supply and Raspberry Pi.
 - A level shifter from 3.3V data to 5V data is recommended for reliable LEDs.
 - A resistor around 330-470 ohms in series with the data line is commonly used.

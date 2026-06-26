@@ -17,7 +17,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full Nova master architecture, fe
 - microSD card
 - USB microphone or mic module
 - Speaker or small speaker system
-- WS2812B LED ring, about 48 mm outside diameter
+- DIYmall 16 LED WS2812B RGB ring, using one ring from the pack
 - Transparent PLA diffuser ring
 - 3D printed square case and top lid
 - Jumper wires
@@ -106,12 +106,12 @@ In `.env.local`:
 
 ```env
 NOVA_LED_ENABLED=true
-NOVA_LED_COUNT=12
+NOVA_LED_COUNT=16
 NOVA_GPIO_LED_RING_PIN=18
 NOVA_LED_BRIGHTNESS=80
 ```
 
-Nova tries to use `rpi_ws281x` on Raspberry Pi. If that package or the hardware is missing, Nova falls back to printing messages like:
+Nova tries to use `rpi_ws281x` on Raspberry Pi. The DIYmall ring is a 5V WS2812B/5050 individually-addressable RGB ring, so this driver is the correct software family. If that package or the hardware is missing, Nova falls back to printing messages like:
 
 ```text
 [LED] blue listening

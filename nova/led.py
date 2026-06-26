@@ -38,6 +38,15 @@ class LedRing:
             strip.setPixelColor(i, Color(red, green, blue))
         strip.show()
 
+    def _color_one(self, index: int, red: int, green: int, blue: int) -> None:
+        if not self.hardware_ready or not self.pixel_strip:
+            return
+        strip, Color = self.pixel_strip
+        for i in range(settings.led_count):
+            strip.setPixelColor(i, Color(0, 0, 0))
+        strip.setPixelColor(max(0, min(settings.led_count - 1, index)), Color(red, green, blue))
+        strip.show()
+
     def status(self, name: str) -> None:
         colors = {
             "off": (0, 0, 0, "off"),
@@ -142,4 +151,14 @@ def test_led() -> str:
             f"{detail} Check GPIO pin, DIN/DOUT direction, LED power, and common ground."
         )
     ring.status("ready")
-    return f"LED ring is ready on GPIO{settings.led_pin} with {settings.led_count} LEDs."
+    return f"LED ring is ready on GPIO{settings.led_pin} with {settings.led_count} WS2812B LEDs."
+
+
+def test_first_pixel() -> str:
+    ring = get_ring()
+    if not settings.led_enabled:
+        return "LED ring is disabled in configuration."
+    if not ring.hardware_ready:
+        return f"LED ring hardware is not ready. {ring._friendly_error()}"
+    ring._color_one(0, 0, 80, 0)
+    return "LED first-pixel test lit pixel 0 green."
