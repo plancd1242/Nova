@@ -1,2 +1,5 @@
 .env.local
 backups/*.zip
+data/voice_profiles/*.wav
+data/voice_profiles/*.flac
+data/voice_profiles/*.mp3

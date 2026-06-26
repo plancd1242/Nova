@@ -50,4 +50,19 @@ class SystemStatusManager:
         except Exception:
             parts.append("Modes: N/A")
 
+        try:
+            from nova.voice_profiles import VoiceProfileManager
+
+            parts.append("Voice login: " + VoiceProfileManager().status())
+        except Exception:
+            parts.append("Voice login: N/A")
+
+        try:
+            from nova.volume import get_volume_manager
+
+            volume = get_volume_manager().state()
+            parts.append(f"Volume: {volume.display}, bar {volume.bar_percent}%, hardware {volume.hardware}, button {volume.mute_button}")
+        except Exception:
+            parts.append("Volume: N/A")
+
         return SystemStatus(" | ".join(parts))

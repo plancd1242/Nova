@@ -8,10 +8,24 @@ from nova.config import DATA_DIR, settings
 
 
 DEFAULT_FILES: dict[str, Any] = {
-    "settings.json": {"privacy_until": None, "lockdown_active": False, "sleep_active": False},
+    "settings.json": {
+        "privacy_until": None,
+        "lockdown_active": False,
+        "sleep_active": False,
+        "volume_level": settings.volume_default,
+        "volume_muted": False,
+        "volume_saved_level": settings.volume_default,
+    },
     "users.json": {
         "current_user": settings.default_user,
-        "users": {settings.default_user: {"alarms": [], "preferences": {}}},
+        "users": {
+            settings.default_user: {
+                "alarms": [],
+                "preferences": {},
+                "notes": [],
+                "voice_profile": None,
+            }
+        },
     },
     "joke_history.json": {"users": {}},
     "backup_settings.json": {"enabled": True, "time": "00:00", "keep_days": 30},

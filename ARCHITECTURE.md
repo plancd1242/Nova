@@ -100,6 +100,36 @@ Supporting modules:
 - `nova/system_status.py`: aggregate status for app commands.
 - `nova/notifications.py`: notification history.
 - `nova/lockdown.py`, `nova/sleep.py`, and `nova/privacy.py`: operating mode managers.
+- `nova/camera.py`, `nova/motion.py`, and `nova/ultrasonic.py`: safe hooks for security hardware.
+- `nova/diagnostics.py`: terminal test commands for major systems.
+- `nova/volume.py`: shared software volume state and future rotary encoder integration.
+
+## Volume Control System
+
+Nova stores volume locally in `data/settings.json` and exposes it through `nova.volume.get_volume_manager()`.
+
+Current behavior:
+
+- Software volume is always available when enabled.
+- Physical dial support is optional and reports `Not Installed`, `Missing`, or `Configured`.
+- OLED draws a small pixel speaker and horizontal volume bar.
+- Rotary encoder SW can toggle mute when configured.
+- Muted volume shows an X indicator while keeping the saved volume bar visible.
+- Future expansion can add separate speech, notification, alarm, and music volumes.
+
+## Account And Voice Profile System
+
+Accounts are stored locally in `data/users.json`.
+
+Current account data:
+
+- Name.
+- Preferences.
+- Account-aware notes.
+- Per-user joke history.
+- Voice profile metadata.
+
+Voice login is planned as a local-only Raspberry Pi feature. The current implementation is fallback-ready and stores only compact local metadata when explicitly enabled. It does not upload voice samples. If the microphone or voice-recognition packages are unavailable, Nova reports that voice login is unavailable and typed account switching continues to work.
 
 ## Temperature And Humidity Sensor
 
@@ -272,6 +302,18 @@ Unavailable features:
 ## File Architecture Rules
 
 Every feature should have a clear file location, be modular, and support future expansion. Avoid giant files when possible. Keep major systems separated, including OLED, LED, jokes, backups, and lockdown.
+
+## Hardware GPIO Configuration
+
+GPIO assignments live in one `.env` section:
+
+```text
+# 🍓 Hardware GPIO Pin Assignments
+```
+
+Use centralized `NOVA_GPIO_*` settings for hardware pins. Feature-specific pin settings should only exist as backward-compatible fallbacks. New hardware modules should add their pin names to the centralized section instead of creating a separate pin setting elsewhere.
+
+Current centralized assignments include OLED I2C, LED ring, rotary encoder CLK/DT/SW, DHT22, PIR, ultrasonic trigger/echo, BH1750 I2C, camera connector, future buttons, future buzzer, future relays, and future sensors.
 
 ## Data Flow Rules
 

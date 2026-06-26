@@ -36,6 +36,8 @@ class NovaApp:
         self._load_env_file(".env")
 
         from nova.backups import BackupManager
+        from nova.accounts import Accounts
+        from nova.diagnostics import Diagnostics
         from nova.hardware import HardwareManager
         from nova.lockdown import LockdownManager
         from nova.notifications import NotificationManager
@@ -43,8 +45,11 @@ class NovaApp:
         from nova.sensor_manager import get_sensor_manager
         from nova.sleep import SleepManager
         from nova.system_status import SystemStatusManager
+        from nova.voice_profiles import VoiceProfileManager
 
+        self.accounts = Accounts()
         self.backups = BackupManager()
+        self.diagnostics = Diagnostics()
         self.hardware = HardwareManager()
         self.lockdown = LockdownManager()
         self.notifications = NotificationManager()
@@ -52,6 +57,7 @@ class NovaApp:
         self.sensor_manager = get_sensor_manager()
         self.sleep = SleepManager()
         self.system_status = SystemStatusManager()
+        self.voice_profiles = VoiceProfileManager(self.accounts)
 
     # ------------------------------------------------------------
     # Basic helpers
@@ -161,6 +167,24 @@ class NovaApp:
             stop_auto_refresh = getattr(oled_module, "stop_auto_refresh", None)
             if callable(stop_auto_refresh):
                 stop_auto_refresh()
+        except Exception:
+            return
+
+    def start_volume_monitor(self) -> None:
+        try:
+            from nova.volume import get_volume_manager
+
+            result = get_volume_manager().start_hardware_monitor()
+            if "started" in result.lower():
+                print(f"[VOLUME] {result}")
+        except Exception as exc:
+            print(f"[VOLUME] monitor unavailable: {exc}")
+
+    def stop_volume_monitor(self) -> None:
+        try:
+            from nova.volume import get_volume_manager
+
+            get_volume_manager().stop_hardware_monitor()
         except Exception:
             return
 
@@ -327,7 +351,27 @@ class NovaApp:
             self.status_display("listening")
             return "Uh-huh?"
 
+        if lower.startswith("test "):
+            self.status_display("thinking")
+            try:
+                return self._test_command(command)
+            finally:
+                if not self.is_private():
+                    self.status_display("done")
+
         # Private mode
+        if lower in ["who am i", "current account", "who is logged in", "which account"]:
+            return self.accounts.current_account_report()
+
+        if lower.startswith("switch account") or lower.startswith("change account"):
+            return self._account_command(command)
+
+        if lower.startswith("create account") or lower.startswith("make account"):
+            return self._account_command(command)
+
+        if lower in ["list accounts", "show accounts"]:
+            return self.accounts.list_accounts()
+
         if "private time left" in lower:
             return self.private_time_left()
 
@@ -365,6 +409,9 @@ class NovaApp:
                 keep_display_mode = True
                 return self._lockdown_command()
 
+            if "oled status" in lower or "display status" in lower:
+                return self.diagnostics.oled_status()
+
             if route and route.category == "oled":
                 return self._oled_command(command)
 
@@ -379,6 +426,12 @@ class NovaApp:
 
             if "notification" in lower or "notifications" in lower:
                 return self._notification_command(command)
+
+            if "voice login" in lower or "voice profile" in lower:
+                return self._voice_profile_command(command)
+
+            if self._looks_like_volume(lower):
+                return self._volume_command(command)
 
             if (route and route.category == "greeting") or self._matches(lower, ["hello", "hi nova", "hi"]):
                 return random.choice(
@@ -465,6 +518,9 @@ class NovaApp:
             ]
         ) or text in {"temperature", "temp"}
 
+    def _looks_like_volume(self, text: str) -> bool:
+        return any(word in text for word in ["volume", "mute", "unmute", "louder", "quieter", "turn it up", "turn it down"])
+
     def _time_command(self) -> str:
         now = _dt.datetime.now()
         return f"It is {now.strftime('%I:%M %p').lstrip('0')}."
@@ -472,6 +528,31 @@ class NovaApp:
     def _date_command(self) -> str:
         now = _dt.datetime.now()
         return f"Today is {now.strftime('%A, %B %d, %Y')}."
+
+    def _account_command(self, command: str) -> str:
+        lower = command.lower()
+        name = command
+        for phrase in ["create account", "make account", "switch account", "change account", "for", "to", "named"]:
+            name = re.sub(rf"\b{re.escape(phrase)}\b", "", name, flags=re.IGNORECASE).strip()
+        if not name:
+            if lower.startswith(("create", "make")):
+                return "What name should I use for the new account?"
+            return "Which account should I switch to?"
+        if lower.startswith(("create", "make")):
+            return self.accounts.create(name)
+        return self.accounts.switch(name)
+
+    def _test_command(self, command: str) -> str:
+        test_name = re.sub(r"^test\s+", "", command, flags=re.IGNORECASE).strip()
+        if test_name == "backup status":
+            return self.backups.status()
+        if test_name == "system status":
+            return self.system_status.report().summary
+        if test_name == "hardware status":
+            return self.hardware.report()
+        if test_name == "sensor status":
+            return self.sensor_manager.status_report()
+        return self.diagnostics.run(test_name)
 
     def _backup_command(self, category: str, command: str) -> str:
         try:
@@ -536,6 +617,49 @@ class NovaApp:
         if "show" in lower or "list" in lower or "history" in lower:
             return self.notifications.history()
         return self.notifications.notify("Nova note", command, level="info")
+
+    def _volume_command(self, command: str) -> str:
+        try:
+            from nova.volume import get_volume_manager
+
+            manager = get_volume_manager()
+            lower = command.lower()
+            match = re.search(r"\b(\d{1,3})\b", lower)
+            if "mute" in lower and "unmute" not in lower:
+                result = manager.mute()
+            elif "unmute" in lower:
+                result = manager.unmute()
+            elif "button" in lower or "press" in lower or "toggle" in lower:
+                result = manager.toggle_mute_from_button()
+            elif match:
+                result = manager.set_level(int(match.group(1)))
+            elif "up" in lower or "louder" in lower or "increase" in lower:
+                result = manager.adjust(5)
+            elif "down" in lower or "quieter" in lower or "decrease" in lower:
+                result = manager.adjust(-5)
+            else:
+                state = manager.state()
+                result = f"Volume is {state.display}. Hardware: {state.hardware}."
+            self.oled("ready")
+            return result
+        except Exception as exc:
+            return f"Volume control is unavailable: {exc}"
+
+    def _voice_profile_command(self, command: str) -> str:
+        lower = command.lower()
+        if "status" in lower or "available" in lower:
+            return self.voice_profiles.status()
+        if "train" in lower or "create" in lower or "setup" in lower:
+            user = self.accounts.current_user()
+            return self.voice_profiles.create_profile_from_phrase(user, "Hi Nova")
+        if "who" in lower or "identify" in lower:
+            result = self.voice_profiles.identify_from_phrase("Hi Nova")
+            if result.status == "Matched" and result.user:
+                return f"I think {result.user} is speaking."
+            if result.status == "Unavailable":
+                return self.voice_profiles.status()
+            return "I am not sure who is speaking."
+        return self.voice_profiles.status()
 
     def _oled_command(self, command: str) -> str:
         lower = command.lower()
@@ -762,6 +886,7 @@ class NovaApp:
     def run_typed(self) -> None:
         self.status_display("ready")
         self.start_oled_refresh()
+        self.start_volume_monitor()
         self.start_backup_scheduler()
         self.say("Nova is online. Type a command.")
 
@@ -780,4 +905,5 @@ class NovaApp:
             self.status_display("off")
         finally:
             self.stop_oled_refresh()
+            self.stop_volume_monitor()
             self.stop_backup_scheduler()

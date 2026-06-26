@@ -13,7 +13,7 @@ class VoltageReading:
     @property
     def display(self) -> str:
         if self.volts is None:
-            return "N/A" if self.status != "Disabled" else "Disabled"
+            return "N/A"
         return f"{self.volts:.2f}V"
 
 

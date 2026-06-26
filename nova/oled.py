@@ -168,7 +168,8 @@ class OledDisplay:
                 draw.text((68, 39), detail[:10], font=font, fill=255)
 
         draw.line((0, 52, settings.oled_width - 1, 52), fill=255)
-        draw.text((0, 54), f"Mode: {self._mode_label(screen.mode)}"[:21], font=font, fill=255)
+        draw.text((0, 54), f"Mode:{self._mode_label(screen.mode)}"[:12], font=font, fill=255)
+        self._draw_volume_indicator(draw, 70, 54)
 
     def _draw_backup(self, draw: object, font: object, complete: bool) -> None:
         self._draw_face(draw, x=4, y=2, mood="backup_complete" if complete else "backup")
@@ -238,6 +239,31 @@ class OledDisplay:
                 draw.rectangle((left, top, left + 3, y + 10), fill=255)
             else:
                 draw.rectangle((left, top, left + 3, y + 10), outline=255)
+
+    def _draw_volume_indicator(self, draw: object, x: int, y: int) -> None:
+        try:
+            from nova.volume import get_volume_manager
+
+            volume = get_volume_manager().state()
+            percent = volume.bar_percent
+        except Exception:
+            percent = 0
+            volume = None
+
+        speaker_x = x
+        draw.rectangle((speaker_x, y + 3, speaker_x + 3, y + 8), outline=255)
+        draw.polygon([(speaker_x + 4, y + 3), (speaker_x + 9, y), (speaker_x + 9, y + 11), (speaker_x + 4, y + 8)], outline=255)
+        if volume is not None and volume.muted:
+            draw.line((speaker_x + 11, y + 2, speaker_x + 17, y + 9), fill=255)
+            draw.line((speaker_x + 17, y + 2, speaker_x + 11, y + 9), fill=255)
+
+        bar_x = x + 22
+        bar_y = y + 3
+        bar_w = 35
+        draw.rectangle((bar_x, bar_y, bar_x + bar_w, bar_y + 7), outline=255)
+        fill_w = int((bar_w - 2) * max(0, min(100, percent)) / 100)
+        if fill_w > 0:
+            draw.rectangle((bar_x + 1, bar_y + 1, bar_x + fill_w, bar_y + 6), fill=255)
 
     def _metrics(self) -> dict[str, str]:
         temp = "N/A"

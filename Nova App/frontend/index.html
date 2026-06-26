@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#19a7ce" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Nova" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Nova</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/assets/nova-icon.svg" />
+    <link rel="apple-touch-icon" href="/assets/nova-icon.svg" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <section id="loginView" class="login-view">
+        <div class="login-card">
+          <div class="nova-orb" aria-hidden="true"><span>:)</span></div>
+          <h1>Nova</h1>
+          <form id="loginForm">
+            <input id="passwordInput" type="password" autocomplete="current-password" placeholder="Password" />
+            <button type="submit">Unlock Nova</button>
+          </form>
+          <p id="loginMessage" class="muted"></p>
+        </div>
+      </section>
+
+      <section id="appView" class="app-view hidden">
+        <header class="topbar">
+          <button id="menuButton" class="icon-button" aria-label="Menu">☰</button>
+          <div>
+            <h1>Nova</h1>
+            <p id="connectionState">Connecting</p>
+          </div>
+          <button id="logoutButton" class="icon-button" aria-label="Log out">⏻</button>
+        </header>
+
+        <nav id="nav" class="tabs" aria-label="Nova sections">
+          <button data-page="home" class="active">🏠 Home</button>
+          <button data-page="talk">💬 Talk</button>
+          <button data-page="camera">📹 Camera</button>
+          <button data-page="lockdown">🚨 Lockdown</button>
+          <button data-page="backup">💾 Backup</button>
+          <button data-page="hardware">📊 Hardware</button>
+          <button data-page="accounts">👤 Accounts</button>
+          <button data-page="settings">⚙️ Settings</button>
+          <button data-page="notifications">🔔 Alerts</button>
+        </nav>
+
+        <main>
+          <section class="page active" data-page="home">
+            <div class="hero-panel">
+              <div class="nova-face" id="novaFace">:)</div>
+              <div>
+                <h2 id="novaMode">Ready</h2>
+                <p id="novaStatus">Nova is online</p>
+              </div>
+            </div>
+            <div class="metric-grid">
+              <article class="metric"><span>🕒</span><b id="timeValue">N/A</b><small>Time</small></article>
+              <article class="metric"><span>🌡️</span><b id="temperatureValue">N/A</b><small>Temperature</small></article>
+              <article class="metric"><span>💧</span><b id="humidityValue">N/A</b><small>Humidity</small></article>
+              <article class="metric"><span>💡</span><b id="lightValue">N/A</b><small>Light</small></article>
+              <article class="metric"><span>⚡</span><b id="voltageValue">N/A</b><small>Voltage</small></article>
+              <article class="metric"><span>📶</span><b id="wifiValue">N/A</b><small>Wi-Fi</small></article>
+              <article class="metric"><span>💾</span><b id="backupValue">N/A</b><small>Backup</small></article>
+              <article class="metric"><span>🔋</span><b id="batteryValue">Future</b><small>Battery</small></article>
+              <article class="metric"><span>🔊</span><b id="volumeValue">N/A</b><small>Volume</small></article>
+            </div>
+            <section class="oled-preview">
+              <div class="oled-screen">
+                <div><span id="oledFace">:)</span><span id="oledTime">N/A</span></div>
+                <div>T:<span id="oledTemp">N/A</span> H:<span id="oledHumidity">N/A</span></div>
+                <div>WiFi:<span id="oledWifi">N/A</span> V:<span id="oledVolt">N/A</span></div>
+                <div>Mode: <span id="oledMode">Ready</span></div>
+              </div>
+            </section>
+          </section>
+
+          <section class="page" data-page="talk">
+            <div id="chatLog" class="chat-log"></div>
+            <form id="commandForm" class="command-bar">
+              <button id="voiceButton" type="button" aria-label="Voice">🎤</button>
+              <input id="commandInput" autocomplete="off" placeholder="Ask Nova anything" />
+              <button type="submit">Send</button>
+            </form>
+          </section>
+
+          <section class="page" data-page="camera">
+            <div class="camera-frame"><span id="cameraStatus">Camera Offline</span></div>
+          </section>
+
+          <section class="page" data-page="lockdown">
+            <div class="danger-panel">
+              <h2 id="lockdownStatus">Lockdown Ready</h2>
+              <p>Camera: <span id="lockdownCamera">N/A</span></p>
+              <p>Motion: <span id="lockdownMotion">N/A</span></p>
+              <p>Distance: <span id="lockdownDistance">N/A</span></p>
+            </div>
+            <div id="alertHistory" class="list"></div>
+          </section>
+
+          <section class="page" data-page="backup">
+            <div class="action-card">
+              <h2>Backups</h2>
+              <p>Last: <span id="lastBackup">N/A</span></p>
+              <p>Next: <span id="nextBackup">N/A</span></p>
+              <button id="manualBackupButton">Manual Backup</button>
+            </div>
+            <div id="backupHistory" class="list"></div>
+          </section>
+
+          <section class="page" data-page="hardware">
+            <div id="hardwareList" class="hardware-list"></div>
+          </section>
+
+          <section class="page" data-page="accounts">
+            <div class="account-current">
+              <div id="accountAvatar">N</div>
+              <div><h2 id="currentAccount">N/A</h2><p>Current account</p></div>
+            </div>
+            <div id="accountList" class="account-list"></div>
+          </section>
+
+          <section class="page" data-page="settings">
+            <div id="settingsList" class="settings-list"></div>
+          </section>
+
+          <section class="page" data-page="notifications">
+            <div id="notificationList" class="list"></div>
+          </section>
+        </main>
+      </section>
+    </div>
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

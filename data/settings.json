@@ -1,5 +1,8 @@
 {
   "lockdown_active": false,
   "privacy_until": null,
-  "sleep_active": false
+  "sleep_active": false,
+  "volume_level": 60,
+  "volume_muted": false,
+  "volume_saved_level": 60
 }

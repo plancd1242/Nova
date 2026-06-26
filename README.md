@@ -107,7 +107,7 @@ In `.env.local`:
 ```env
 NOVA_LED_ENABLED=true
 NOVA_LED_COUNT=12
-NOVA_LED_PIN=18
+NOVA_GPIO_LED_RING_PIN=18
 NOVA_LED_BRIGHTNESS=80
 ```
 
@@ -160,11 +160,11 @@ In `.env.local`:
 NOVA_OLED_ENABLED=true
 NOVA_OLED_WIDTH=128
 NOVA_OLED_HEIGHT=64
-NOVA_OLED_I2C_ADDRESS=60
+NOVA_GPIO_OLED_I2C_ADDRESS=60
 NOVA_OLED_REFRESH_SECONDS=5
 ```
 
-`60` is decimal for the common `0x3C` SSD1306 I2C address. If `i2cdetect -y 1` shows `3d`, use `NOVA_OLED_I2C_ADDRESS=61`.
+`60` is decimal for the common `0x3C` SSD1306 I2C address. If `i2cdetect -y 1` shows `3d`, use `NOVA_GPIO_OLED_I2C_ADDRESS=61`.
 
 Nova refreshes the OLED automatically while it is running, so the clock and sensor readings keep updating even when no command is being entered. `NOVA_OLED_REFRESH_SECONDS=5` is a good default for the DHT22 because the sensor should not be polled too aggressively.
 
@@ -199,7 +199,7 @@ In `.env.local`:
 ```env
 NOVA_CLIMATE_ENABLED=true
 NOVA_CLIMATE_SENSOR_TYPE=DHT22
-NOVA_CLIMATE_PIN=D17
+NOVA_GPIO_DHT22_PIN=D17
 ```
 
 With the OLED enabled, Nova shows room temperature and humidity on ready, waiting, thinking, and done screens. You can also ask:
@@ -227,7 +227,7 @@ Optional BH1750 light sensor settings:
 
 ```env
 NOVA_LIGHT_ENABLED=false
-NOVA_LIGHT_I2C_ADDRESS=35
+NOVA_GPIO_BH1750_I2C_ADDRESS=35
 ```
 
 `35` is decimal for the common `0x23` BH1750 address.
@@ -255,9 +255,103 @@ Commands include:
 hardware status
 sensor status
 system status
+oled status
+volume status
+set volume to 50
+volume up
+volume down
+mute
+unmute
 show notifications
 clear notifications
+test oled
+test backup screen
+test sleep mode
+test privacy mode
+test lockdown mode
+test notifications
+test camera
+test motion sensor
+test ultrasonic sensor
+test climate
+test light sensor
+test voltage sensor
+test volume
+test volume mute
+test volume button
+test accounts
+test voice login
 ```
+
+## Volume Control
+
+Nova has a modular volume manager in `nova/volume.py`. It stores a software volume level in `data/settings.json` and can be expanded for a physical rotary encoder.
+
+Configuration:
+
+```env
+NOVA_VOLUME_ENABLED=true
+NOVA_VOLUME_HARDWARE_ENABLED=false
+NOVA_VOLUME_DEFAULT=60
+NOVA_VOLUME_MIN=0
+NOVA_VOLUME_MAX=100
+NOVA_GPIO_ROTARY_CLK_PIN=D5
+NOVA_GPIO_ROTARY_DT_PIN=D6
+NOVA_GPIO_ROTARY_SW_PIN=
+NOVA_ROTARY_MUTE_ENABLED=true
+```
+
+If the dial hardware or GPIO packages are missing, Nova reports `Not Installed` and continues normally. The OLED dashboard shows a pixel speaker and volume bar. Pressing the rotary encoder button can toggle mute when `NOVA_GPIO_ROTARY_SW_PIN` is configured. While muted, the speaker gets an X but the volume bar keeps showing the saved level.
+
+## Central Hardware GPIO Configuration
+
+All GPIO assignments should live in the `.env.local` section named:
+
+```text
+# 🍓 Hardware GPIO Pin Assignments
+```
+
+Nova's configuration system prefers the centralized `NOVA_GPIO_*` values and keeps older feature-specific names only as backward-compatible fallbacks.
+
+Examples:
+
+```env
+NOVA_GPIO_LED_RING_PIN=18
+NOVA_GPIO_ROTARY_CLK_PIN=D5
+NOVA_GPIO_ROTARY_DT_PIN=D6
+NOVA_GPIO_ROTARY_SW_PIN=
+NOVA_GPIO_DHT22_PIN=D17
+NOVA_GPIO_PIR_PIN=D23
+NOVA_GPIO_ULTRASONIC_TRIGGER_PIN=D24
+NOVA_GPIO_ULTRASONIC_ECHO_PIN=D25
+```
+
+## Accounts And Voice Profiles
+
+Nova supports basic local accounts with separate preferences, account-aware notes, per-user joke history, and a future-ready voice profile metadata field.
+
+Account commands include:
+
+```text
+create account Caleb
+make account Alex
+switch account Caleb
+who am I
+current account
+list accounts
+```
+
+Voice login is fallback-ready but not full acoustic recognition yet. When enabled in the future, profiles should stay local on the Raspberry Pi unless explicitly changed later.
+
+```env
+NOVA_ACCOUNTS_ENABLED=true
+NOVA_MICROPHONE_ENABLED=false
+NOVA_VOICE_LOGIN_ENABLED=false
+NOVA_VOICE_PROFILE_DIR=data/voice_profiles
+NOVA_VOICE_CONFIDENCE_THRESHOLD=0.82
+```
+
+If the microphone or voice-recognition packages are missing, typed account switching still works.
 
 ## Backup Manager
 
