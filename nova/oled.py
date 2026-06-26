@@ -158,14 +158,13 @@ class OledDisplay:
 
         draw.text((0, 15), f"T:{metrics['temp']}", font=font, fill=255)
         draw.text((68, 15), f"H:{metrics['humidity']}", font=font, fill=255)
-        draw.text((0, 27), f"WiFi:{metrics['wifi']}", font=font, fill=255)
-        draw.text((68, 27), f"V:{metrics['voltage']}", font=font, fill=255)
-        draw.text((0, 39), f"Light:{metrics['light']}", font=font, fill=255)
+        draw.text((0, 27), f"V:{metrics['voltage']}", font=font, fill=255)
+        draw.text((68, 27), f"L:{metrics['light']}", font=font, fill=255)
 
         if lines:
             detail = str(lines[0])
             if detail and "N/A" not in detail and not detail.startswith(("Temp:", "Humidity:")):
-                draw.text((68, 39), detail[:10], font=font, fill=255)
+                draw.text((0, 39), detail[:21], font=font, fill=255)
 
         draw.line((0, 52, settings.oled_width - 1, 52), fill=255)
         draw.text((0, 54), f"Mode:{self._mode_label(screen.mode)}"[:12], font=font, fill=255)
@@ -230,7 +229,8 @@ class OledDisplay:
             draw.arc((x + 5, y + 4, x + 12, y + 9), 0, 180, fill=255)
 
     def _draw_wifi_icon(self, draw: object, x: int, y: int, status: str) -> None:
-        bars = {"Weak": 1, "Medium": 2, "Strong": 3}.get(status, 0)
+        status_text = str(status).strip().lower()
+        bars = {"weak": 1, "medium": 2, "strong": 3}.get(status_text, 0)
         for index in range(3):
             height = 3 + index * 3
             left = x + index * 5
@@ -239,6 +239,11 @@ class OledDisplay:
                 draw.rectangle((left, top, left + 3, y + 10), fill=255)
             else:
                 draw.rectangle((left, top, left + 3, y + 10), outline=255)
+        if status_text in {"", "offline", "no connection", "disconnected", "not connected"}:
+            draw.line((x - 1, y, x + 16, y + 11), fill=255)
+            draw.line((x + 16, y, x - 1, y + 11), fill=255)
+        elif status_text in {"n/a", "unsupported", "unknown"}:
+            draw.text((x - 1, y + 1), "?", fill=255)
 
     def _draw_volume_indicator(self, draw: object, x: int, y: int) -> None:
         try:
