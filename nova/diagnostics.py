@@ -6,6 +6,8 @@ class Diagnostics:
         name = name.strip().lower()
         if name in {"oled", "oled status"}:
             return self.oled_status()
+        if name in {"led", "led ring", "light ring"}:
+            return self.led()
         if name == "backup screen":
             return self.backup_screen()
         if name == "sleep mode":
@@ -58,6 +60,14 @@ class Diagnostics:
             return "Backup OLED screen test complete."
         except Exception as exc:
             return f"Backup screen test unavailable: {exc}"
+
+    def led(self) -> str:
+        try:
+            from nova import led
+
+            return led.test_led()
+        except Exception as exc:
+            return f"LED ring test unavailable: {exc}"
 
     def sleep_mode(self) -> str:
         from nova.sleep import SleepManager

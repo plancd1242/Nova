@@ -170,6 +170,16 @@ class NovaApp:
         except Exception:
             return
 
+    def shutdown_oled(self) -> None:
+        try:
+            from nova import oled as oled_module
+
+            shutdown = getattr(oled_module, "shutdown", None)
+            if callable(shutdown):
+                shutdown()
+        except Exception:
+            return
+
     def start_volume_monitor(self) -> None:
         try:
             from nova.volume import get_volume_manager
@@ -907,3 +917,4 @@ class NovaApp:
             self.stop_oled_refresh()
             self.stop_volume_monitor()
             self.stop_backup_scheduler()
+            self.shutdown_oled()

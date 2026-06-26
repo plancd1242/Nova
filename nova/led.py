@@ -39,11 +39,19 @@ class LedRing:
     def status(self, name: str) -> None:
         colors = {
             "off": (0, 0, 0, "off"),
+            "ready": (0, 180, 50, "green ready"),
             "waiting": (2, 2, 6, "very dim waiting"),
             "listening": (20, 80, 255, "blue listening"),
             "thinking": (60, 0, 120, "blue purple thinking"),
+            "speaking": (120, 0, 180, "purple speaking"),
+            "backup": (180, 180, 180, "white backup"),
+            "backup_complete": (0, 180, 50, "green backup complete"),
             "done": (0, 180, 50, "green done"),
-            "private": (160, 0, 0, "red private"),
+            "private": (255, 80, 0, "orange private"),
+            "privacy": (255, 80, 0, "orange privacy"),
+            "sleeping": (4, 4, 12, "dim sleep"),
+            "sleep": (4, 4, 12, "dim sleep"),
+            "lockdown": (255, 0, 0, "red lockdown"),
             "warning": (255, 120, 0, "yellow orange warning"),
             "calm": (25, 20, 80, "soft blue purple calm"),
             "party": (120, 0, 180, "rainbow party"),
@@ -77,3 +85,45 @@ class LedRing:
             time.sleep(0.2)
         self.status("waiting")
 
+    def off(self) -> None:
+        self.status("off")
+
+
+_ring: LedRing | None = None
+
+
+def get_ring() -> LedRing:
+    global _ring
+    if _ring is None:
+        _ring = LedRing()
+    return _ring
+
+
+def status(name: str) -> None:
+    get_ring().status(name)
+
+
+def show(name: str) -> None:
+    status(name)
+
+
+def set_mode(name: str) -> None:
+    status(name)
+
+
+def led_status(name: str) -> None:
+    status(name)
+
+
+def off() -> None:
+    get_ring().off()
+
+
+def test_led() -> str:
+    ring = get_ring()
+    if not settings.led_enabled:
+        return "LED ring is disabled in configuration."
+    if not ring.hardware_ready:
+        return "LED ring hardware is not ready. Check rpi_ws281x install, sudo/root permissions, GPIO pin, and LED power wiring."
+    ring.status("ready")
+    return f"LED ring is ready on GPIO{settings.led_pin} with {settings.led_count} LEDs."

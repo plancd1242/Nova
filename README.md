@@ -1,6 +1,6 @@
 # Nova
 
-Nova is a homemade, privacy-focused smart assistant box for a Raspberry Pi 4. It starts as a typed-command assistant that works on a Mac or regular computer, then can grow into a voice assistant with eSpeak NG, a WS2812B LED ring, microphone wake word, weather, search, Spotify, alarms, timers, notes, and family accounts.
+Nova is a homemade, privacy-focused smart assistant box for a Raspberry Pi 3B+. It starts as a typed-command assistant that works on a Mac or regular computer, then can grow into a voice assistant with eSpeak NG, a WS2812B LED ring, microphone wake word, weather, search, Spotify, alarms, timers, notes, and family accounts.
 
 Nova is designed to be safe for a kid/family project:
 

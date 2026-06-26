@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 from dataclasses import dataclass
 from datetime import datetime
 import threading
@@ -44,6 +45,7 @@ class OledDisplay:
         self._lock = threading.Lock()
         self._stop_refresh = threading.Event()
         self._refresh_thread: threading.Thread | None = None
+        self._is_shutdown = False
         if settings.oled_enabled:
             self._try_hardware()
 
@@ -63,6 +65,7 @@ class OledDisplay:
             )
             self.image_tools = (Image, ImageDraw, ImageFont)
             self.hardware_ready = True
+            self._is_shutdown = False
             self.clear()
         except Exception as exc:
             print(f"[OLED] hardware unavailable, using text fallback: {exc}")
@@ -75,15 +78,38 @@ class OledDisplay:
             self.device.fill(0)
             self.device.show()
 
+    def shutdown(self) -> None:
+        self.stop_auto_refresh()
+        self._is_shutdown = True
+        if not self.hardware_ready or self.device is None:
+            print("[OLED] shutdown")
+            return
+
+        with self._lock:
+            try:
+                self.device.fill(0)
+                self.device.show()
+                poweroff = getattr(self.device, "poweroff", None)
+                if callable(poweroff):
+                    poweroff()
+            except Exception as exc:
+                print(f"[OLED] shutdown failed: {exc}")
+
     def status(self, mode: str, extra_lines: list[str] | tuple[str, ...] | None = None) -> None:
+        if self._is_shutdown:
+            return
         self.current_mode = mode
         self.current_extra_lines = tuple(extra_lines) if extra_lines else None
         self._draw(mode, self.current_extra_lines, print_fallback=True)
 
     def refresh(self) -> None:
+        if self._is_shutdown:
+            return
         self._draw(self.current_mode, self.current_extra_lines, print_fallback=False)
 
     def start_auto_refresh(self, refresh_seconds: int | None = None) -> None:
+        if self._is_shutdown:
+            return
         if not settings.oled_enabled or not self.hardware_ready:
             return
         if self._refresh_thread and self._refresh_thread.is_alive():
@@ -101,7 +127,11 @@ class OledDisplay:
 
     def stop_auto_refresh(self) -> None:
         self._stop_refresh.set()
-        if self._refresh_thread and self._refresh_thread.is_alive():
+        if (
+            self._refresh_thread
+            and self._refresh_thread.is_alive()
+            and self._refresh_thread is not threading.current_thread()
+        ):
             self._refresh_thread.join(timeout=1)
         self._refresh_thread = None
 
@@ -331,12 +361,16 @@ class OledDisplay:
 
 
 _display: OledDisplay | None = None
+_atexit_registered = False
 
 
 def get_display() -> OledDisplay:
-    global _display
+    global _display, _atexit_registered
     if _display is None:
         _display = OledDisplay()
+    if not _atexit_registered:
+        atexit.register(shutdown)
+        _atexit_registered = True
     return _display
 
 
@@ -366,3 +400,8 @@ def start_auto_refresh(refresh_seconds: int | None = None) -> None:
 
 def stop_auto_refresh() -> None:
     get_display().stop_auto_refresh()
+
+
+def shutdown() -> None:
+    if _display is not None:
+        _display.shutdown()
