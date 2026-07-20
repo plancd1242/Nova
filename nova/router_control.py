@@ -452,7 +452,7 @@ class RouterSession:
                 const cls = (el.className || '').toString().toLowerCase();
                 if (cls.includes('on') || cls.includes('enable')) return true;
                 if (cls.includes('off') || cls.includes('disable')) return false;
-              }
+              }                                                                                                                                 
               return null;
             }
             """,

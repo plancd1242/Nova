@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 class WakeWordDetector:
-    """Placeholder for later offline "Hey Nova" wake word detection."""
+    """Hey Nova"""
 
     def is_available(self) -> bool:
         return False
