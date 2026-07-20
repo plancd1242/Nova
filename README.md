@@ -533,3 +533,9 @@ It checks voice fallback, LED fallback/hardware, storage files, API config, and 
 - GPIO18/PWM is common for WS2812B examples.
 - If WS2812B setup reports `Failed to create mailbox device`, run `sudo .venv/bin/python main.py` from the project folder.
 - Real microphone and wake-word support are intentionally placeholders in the MVP so typed commands work first.
+
+
+
+
+
+My Email For Questions: plancd.nova@gmail.com
