@@ -7,5 +7,6 @@ data/router_state.json
 data/router_diagnostics.json
 data/router_diagnostics/
 data/router_screenshots/
+models/
 .venv
 .env

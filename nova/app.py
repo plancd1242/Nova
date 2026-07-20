@@ -441,6 +441,10 @@ class NovaApp:
             if router_answer is not None:
                 return router_answer
 
+            voice_answer = self._voice_command(command)
+            if voice_answer is not None:
+                return voice_answer
+
             if "voice login" in lower or "voice profile" in lower:
                 return self._voice_profile_command(command)
 
@@ -657,6 +661,38 @@ class NovaApp:
             return "I heard a router command, but I do not know that router action yet."
         except Exception as exc:
             return f"Router control is unavailable: {type(exc).__name__}."
+
+    def _voice_command(self, command: str) -> str | None:
+        lower = command.lower()
+        if not any(phrase in lower for phrase in ["listen once", "voice status", "microphone status", "list microphones", "start voice", "wake word status"]):
+            return None
+        try:
+            if "list microphones" in lower:
+                from nova.microphone import list_devices
+
+                return list_devices()
+            if "microphone status" in lower:
+                from nova.microphone import status
+
+                current = status()
+                return f"Microphone: {current.status}. {current.message}"
+            if "wake word status" in lower:
+                from nova.wake_word import get_wake_word_detector
+
+                current = get_wake_word_detector().status()
+                return f"Wake word: {current.status}. {current.message}"
+            from nova.voice_loop import VoiceLoop
+
+            loop = VoiceLoop(self)
+            if "voice status" in lower:
+                return loop.status()
+            if "listen once" in lower:
+                return loop.listen_once()
+            if "start voice" in lower:
+                return "Use the command line voice mode for continuous listening: python main.py --voice"
+            return loop.status()
+        except Exception as exc:
+            return f"Voice input is unavailable: {type(exc).__name__}."
 
     def _volume_command(self, command: str) -> str:
         try:
@@ -943,6 +979,21 @@ class NovaApp:
                 self.say(answer)
 
             self.status_display("off")
+        finally:
+            self.stop_oled_refresh()
+            self.stop_volume_monitor()
+            self.stop_backup_scheduler()
+            self.shutdown_oled()
+
+    def run_voice(self) -> None:
+        self.status_display("ready")
+        self.start_oled_refresh()
+        self.start_volume_monitor()
+        self.start_backup_scheduler()
+        try:
+            from nova.voice_loop import VoiceLoop
+
+            VoiceLoop(self).run_forever()
         finally:
             self.stop_oled_refresh()
             self.stop_volume_monitor()

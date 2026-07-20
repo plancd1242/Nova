@@ -129,7 +129,16 @@ Current account data:
 - Per-user joke history.
 - Voice profile metadata.
 
-Voice login is planned as a local-only Raspberry Pi feature. The current implementation is fallback-ready and stores only compact local metadata when explicitly enabled. It does not upload voice samples. If the microphone or voice-recognition packages are unavailable, Nova reports that voice login is unavailable and typed account switching continues to work.
+Voice commands are available as an optional local-only Raspberry Pi feature through Vosk. The voice path streams USB microphone audio to an offline recognizer in memory, then routes recognized text through the same Nova command router used by typed mode. Vosk wake-word mode can continuously listen for configured phrases such as "hey nova" before capturing a command. If the microphone, Vosk package, or model files are unavailable, Nova reports the problem and typed commands continue to work.
+
+Voice login remains fallback-ready and stores only compact local metadata when explicitly enabled. It does not upload voice samples. Acoustic identity recognition is not implemented yet.
+
+Modules:
+
+- `nova/microphone.py`: USB microphone detection, device listing, and streaming.
+- `nova/speech_to_text.py`: offline Vosk transcription.
+- `nova/wake_word.py`: Vosk-based wake-word detection.
+- `nova/voice_loop.py`: command capture loop and integration with Nova's status displays.
 
 ## Temperature And Humidity Sensor
 

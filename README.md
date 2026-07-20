@@ -288,6 +288,11 @@ test volume button
 test router
 test router status
 inspect router
+test microphone
+test microphones
+test voice
+test wake word
+test listen once
 test accounts
 test voice login
 ```
@@ -428,11 +433,78 @@ current account
 list accounts
 ```
 
-Voice login is fallback-ready but not full acoustic recognition yet. When enabled in the future, profiles should stay local on the Raspberry Pi unless explicitly changed later.
+## Offline Voice Commands
+
+Nova supports offline voice commands through a USB microphone and Vosk. Typed commands remain available and are still the safest fallback.
+
+Install the Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+Install a Vosk English model locally. For example, download `vosk-model-small-en-us-0.15` from the Vosk model list and place it at:
+
+```text
+models/vosk-model-small-en-us-0.15
+```
+
+Configuration:
+
+```env
+NOVA_MICROPHONE_ENABLED=true
+NOVA_VOICE_COMMANDS_ENABLED=true
+NOVA_VOICE_INPUT_MODE=typed
+NOVA_VOICE_WAKE_WORD_ENABLED=false
+NOVA_VOICE_WAKE_WORDS=hey nova,nova
+NOVA_VOICE_TRANSCRIPTION_ENGINE=vosk
+NOVA_VOSK_MODEL_PATH=models/vosk-model-small-en-us-0.15
+NOVA_AUDIO_INPUT_DEVICE=
+NOVA_VOICE_SAMPLE_RATE=16000
+NOVA_VOICE_RECORD_SECONDS=5
+NOVA_VOICE_COMMAND_TIMEOUT_SECONDS=8
+NOVA_VOICE_SILENCE_SECONDS=1.2
+NOVA_VOICE_WAKE_COOLDOWN_SECONDS=2
+```
+
+Useful tests:
+
+```text
+test microphones
+test microphone
+test voice
+test listen once
+test wake word
+```
+
+Run one command from the shell:
+
+```bash
+python main.py --listen-once
+```
+
+Run continuous voice mode:
+
+```bash
+python main.py --voice
+```
+
+If `NOVA_VOICE_WAKE_WORD_ENABLED=true`, Nova continuously listens offline for `hey nova` or `nova`, then captures the following command. If wake-word mode is disabled, `--voice` repeatedly listens for short commands.
+
+Privacy behavior:
+
+- Voice recognition is offline-only.
+- Nova streams microphone audio to Vosk in memory.
+- Nova does not save microphone recordings by default.
+- Cloud transcription is not used.
+
+Voice login is fallback-ready but not full acoustic identity recognition yet. When enabled in the future, profiles should stay local on the Raspberry Pi unless explicitly changed later.
 
 ```env
 NOVA_ACCOUNTS_ENABLED=true
-NOVA_MICROPHONE_ENABLED=false
+NOVA_MICROPHONE_ENABLED=true
+NOVA_VOICE_COMMANDS_ENABLED=true
+NOVA_VOICE_WAKE_WORD_ENABLED=false
 NOVA_VOICE_LOGIN_ENABLED=false
 NOVA_VOICE_PROFILE_DIR=data/voice_profiles
 NOVA_VOICE_CONFIDENCE_THRESHOLD=0.82
@@ -532,7 +604,7 @@ It checks voice fallback, LED fallback/hardware, storage files, API config, and 
 - Use a power setup appropriate for your LED ring.
 - GPIO18/PWM is common for WS2812B examples.
 - If WS2812B setup reports `Failed to create mailbox device`, run `sudo .venv/bin/python main.py` from the project folder.
-- Real microphone and wake-word support are intentionally placeholders in the MVP so typed commands work first.
+- Offline microphone and wake-word support use Vosk when enabled. Typed commands remain the fallback.
 
 
 

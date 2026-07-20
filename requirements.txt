@@ -4,3 +4,5 @@ sympy
 apscheduler
 python-dateutil
 playwright
+vosk
+sounddevice

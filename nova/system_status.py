@@ -58,6 +58,25 @@ class SystemStatusManager:
             parts.append("Voice login: N/A")
 
         try:
+            from nova.voice_loop import VoiceLoop
+
+            class _StatusOnlyApp:
+                state = None
+
+                def status_display(self, mode: str, extra_lines: object = None) -> None:
+                    pass
+
+                def handle_command(self, command: str) -> str:
+                    return ""
+
+                def say(self, text: str) -> None:
+                    pass
+
+            parts.append("Voice commands: " + VoiceLoop(_StatusOnlyApp()).status())
+        except Exception:
+            parts.append("Voice commands: N/A")
+
+        try:
             from nova.volume import get_volume_manager
 
             volume = get_volume_manager().state()

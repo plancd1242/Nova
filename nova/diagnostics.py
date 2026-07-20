@@ -40,6 +40,16 @@ class Diagnostics:
             return self.volume_mute()
         if name == "voice login":
             return self.voice_login()
+        if name in {"voice", "voice commands", "speech to text", "vosk"}:
+            return self.voice_commands()
+        if name in {"microphone", "mic"}:
+            return self.microphone()
+        if name in {"microphones", "list microphones", "audio devices"}:
+            return self.microphones()
+        if name in {"wake word", "wake-word"}:
+            return self.wake_word()
+        if name in {"listen once", "voice listen once"}:
+            return self.listen_once()
         if name in {"accounts", "account system"}:
             return self.accounts()
         if name in {"router", "router control"}:
@@ -195,6 +205,36 @@ class Diagnostics:
 
         manager = VoiceProfileManager()
         return manager.status()
+
+    def voice_commands(self) -> str:
+        from nova.speech_to_text import get_speech_to_text
+
+        return get_speech_to_text().status()
+
+    def microphone(self) -> str:
+        from nova.microphone import status
+
+        current = status()
+        return f"Microphone: {current.status}. {current.message}"
+
+    def microphones(self) -> str:
+        from nova.microphone import list_devices
+
+        return list_devices()
+
+    def wake_word(self) -> str:
+        from nova.wake_word import get_wake_word_detector
+
+        current = get_wake_word_detector().status()
+        return f"Wake word: {current.status}. {current.message}"
+
+    def listen_once(self) -> str:
+        from nova.speech_to_text import get_speech_to_text
+
+        result = get_speech_to_text().listen_once()
+        if not result.ok:
+            return result.message
+        return f'I heard: "{result.text}".'
 
     def accounts(self) -> str:
         from pathlib import Path
