@@ -437,6 +437,10 @@ class NovaApp:
             if "notification" in lower or "notifications" in lower:
                 return self._notification_command(command)
 
+            router_answer = self._router_command(command)
+            if router_answer is not None:
+                return router_answer
+
             if "voice login" in lower or "voice profile" in lower:
                 return self._voice_profile_command(command)
 
@@ -627,6 +631,32 @@ class NovaApp:
         if "show" in lower or "list" in lower or "history" in lower:
             return self.notifications.history()
         return self.notifications.notify("Nova note", command, level="info")
+
+    def _router_command(self, command: str) -> str | None:
+        try:
+            from nova.router_commands import parse_router_command
+            from nova.router_control import get_router_control
+
+            parsed = parse_router_command(command)
+            if parsed is None:
+                return None
+
+            router = get_router_control()
+            if parsed.action == "status":
+                return router.status().message
+            if parsed.action == "inspect":
+                return router.inspect().message
+            if parsed.action == "main_wifi_off":
+                return router.turn_main_wifi_off(confirmed=parsed.confirmed).message
+            if parsed.action == "main_wifi_on":
+                return router.restore_main_wifi().message
+            if parsed.action == "guest" and parsed.guest_key and parsed.enabled is not None:
+                return router.set_guest(parsed.guest_key, parsed.enabled).message
+            if parsed.action == "speed_test":
+                return router.speed_test().message
+            return "I heard a router command, but I do not know that router action yet."
+        except Exception as exc:
+            return f"Router control is unavailable: {type(exc).__name__}."
 
     def _volume_command(self, command: str) -> str:
         try:

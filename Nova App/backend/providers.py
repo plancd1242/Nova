@@ -33,6 +33,7 @@ class StatusProvider:
             "accounts": self._accounts(),
             "notifications": self._notifications(),
             "settings": self._settings(),
+            "router": self._router(),
         }
 
     def _sensors(self) -> dict[str, str]:
@@ -198,6 +199,22 @@ class StatusProvider:
             "sleep_mode": "Available",
             "notifications": "Available",
         }
+
+    def _router(self) -> dict[str, Any]:
+        try:
+            from nova.config import settings
+            from nova.router_status import RouterStateStore
+
+            snapshot = RouterStateStore().snapshot()
+            return {
+                "enabled": settings.router_control_enabled,
+                "model": settings.router_model or "TP-Link",
+                "last_verified": snapshot.last_verified,
+                "radios": snapshot.radios,
+                "speed_test": snapshot.speed_test,
+            }
+        except Exception:
+            return {"enabled": False, "model": "N/A", "last_verified": None, "radios": {}, "speed_test": None}
 
     def _face(self, mode: str) -> str:
         return {"Lockdown": "!!", "Sleep": "zz", "Privacy": "-_-", "Backup": "[v]"}.get(mode, ":)")

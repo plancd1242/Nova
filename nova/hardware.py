@@ -27,6 +27,7 @@ class HardwareManager:
             HardwareStatus("Voice login", "Enabled" if settings.voice_login_enabled else "Disabled"),
             HardwareStatus("Lockdown motion", "Enabled" if settings.lockdown_motion_enabled else "Disabled"),
             HardwareStatus("Lockdown camera", "Enabled" if settings.lockdown_camera_enabled else "Disabled"),
+            HardwareStatus("Router control", "Enabled" if settings.router_control_enabled else "Disabled"),
         ]
 
     def report(self) -> str:

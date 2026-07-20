@@ -42,6 +42,12 @@ class Diagnostics:
             return self.voice_login()
         if name in {"accounts", "account system"}:
             return self.accounts()
+        if name in {"router", "router control"}:
+            return self.router()
+        if name in {"router status", "wifi status", "wireless status"}:
+            return self.router_status()
+        if name in {"router inspect", "inspect router", "router page"}:
+            return self.router_inspect()
         return "Unknown diagnostic test."
 
     def oled_status(self) -> str:
@@ -204,3 +210,30 @@ class Diagnostics:
             switched = accounts.switch("Diagnostic")
             current = accounts.current_user()
         return f"Account system test OK. {created} {switched} Current: {current}."
+
+    def router(self) -> str:
+        from nova.config import settings
+
+        if not settings.router_control_enabled:
+            return "Router control is disabled."
+        if not settings.router_url:
+            return "Router control is missing a router URL."
+        if not settings.router_local_password:
+            return "Router control is missing the local password."
+        try:
+            import playwright.sync_api  # type: ignore
+
+            _ = playwright
+        except Exception:
+            return "Playwright is unavailable, so router control has been disabled."
+        return "Router control is configured. Use test router status or inspect router for safe live checks."
+
+    def router_status(self) -> str:
+        from nova.router_control import get_router_control
+
+        return get_router_control().status().message
+
+    def router_inspect(self) -> str:
+        from nova.router_control import get_router_control
+
+        return get_router_control().inspect().message

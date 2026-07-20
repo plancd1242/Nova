@@ -315,6 +315,52 @@ Use centralized `NOVA_GPIO_*` settings for hardware pins. Feature-specific pin s
 
 Current centralized assignments include OLED I2C, LED ring, rotary encoder CLK/DT/SW, DHT22, PIR, ultrasonic trigger/echo, BH1750 I2C, camera connector, future buttons, future buzzer, future relays, and future sensors.
 
+## Router Control System
+
+Router control is a local-only owner-authorized feature for the TP-Link Archer AX10000. The router does not provide an API key, so Nova uses Playwright browser automation against the local router admin page.
+
+Modules:
+
+- `nova/router_commands.py`: recognizes router, Wi-Fi, guest-network, and speed-test phrases.
+- `nova/router_control.py`: owns Playwright login, navigation, toggle reads, toggle changes, verification, speed tests, and safe diagnostics.
+- `nova/router_status.py`: owns radio-state names, guest-to-main mapping, saved previous state, and latest speed-test result.
+
+Security boundaries:
+
+- Router password is read only from `.env.local`.
+- Passwords, cookies, session tokens, full page HTML, and screenshots are not logged.
+- `.env.local` and optional router screenshot folders are Git-ignored.
+- Router-changing commands require an authenticated Nova App session when sent through the PWA command endpoint.
+- Turning off all Wi-Fi requires confirmation and prefers Ethernet.
+
+State flow:
+
+```text
+User command
+  -> nova/router_commands.py
+  -> nova/router_control.py
+  -> TP-Link local admin page
+  -> verified router state
+  -> data/router_state.json
+  -> response/status/notifications
+```
+
+Main radios are tracked separately:
+
+- 2.4 GHz
+- 5 GHz-1
+- 5 GHz-2
+
+Guest networks are tracked separately:
+
+- Guest network 1: 2.4 GHz guest network
+- Guest network 2: 5 GHz-1 guest network
+- Guest network 3: 5 GHz-2 guest network
+
+Smart Connect and OFDMA are separate features and must not be treated as Wi-Fi availability by themselves.
+
+The first implementation uses the labels provided by the owner and includes an `inspect router` command for safe live page discovery. If TP-Link changes the page structure, Nova must fail gracefully and report that selectors need to be inspected again.
+
 ## Data Flow Rules
 
 ```text

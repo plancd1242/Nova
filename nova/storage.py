@@ -34,6 +34,14 @@ DEFAULT_FILES: dict[str, Any] = {
     "alarms.json": {"alarms": []},
     "timers.json": {"timers": []},
     "notes.json": {"notes": []},
+    "router_state.json": {
+        "last_verified": None,
+        "last_operation": None,
+        "previous_main_wifi_state": None,
+        "radios": {},
+        "speed_test": None,
+    },
+    "router_diagnostics.json": {"events": []},
 }
 
 

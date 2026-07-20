@@ -285,9 +285,90 @@ test voltage sensor
 test volume
 test volume mute
 test volume button
+test router
+test router status
+inspect router
 test accounts
 test voice login
 ```
+
+## TP-Link Router Control
+
+Nova can control an authorized local TP-Link router through its local administration webpage using Playwright browser automation. This is designed for the owner-controlled local router only.
+
+Required packages on the Raspberry Pi:
+
+```bash
+pip install -r requirements.txt
+python -m playwright install chromium
+```
+
+Private configuration belongs only in `.env.local`:
+
+```env
+# 📶 TP-Link Router Control
+NOVA_ROUTER_CONTROL_ENABLED=true
+NOVA_ROUTER_AUTOMATION_ENGINE=playwright
+NOVA_ROUTER_URL=http://192.168.0.1/webpages/index.html
+NOVA_ROUTER_MODEL=TP-Link Archer AX10000
+NOVA_ROUTER_LOCAL_PASSWORD=your_local_router_password_here
+NOVA_ROUTER_REQUIRE_ETHERNET=true
+NOVA_ROUTER_REQUIRE_OFF_CONFIRMATION=true
+NOVA_ROUTER_HEADLESS=true
+NOVA_ROUTER_TIMEOUT_SECONDS=45
+NOVA_ROUTER_DEBUG_SCREENSHOTS=false
+```
+
+Do not put the router password in Python files, README files, screenshots, or logs. `.env.local` is ignored by Git.
+
+Router commands include:
+
+```text
+check the Wi-Fi status
+which wireless bands are on
+turn off the Wi-Fi
+confirm Wi-Fi off
+turn on the Wi-Fi
+restore Wi-Fi
+turn on guest network one
+disable the 2.4 gigahertz guest network
+turn on guest network two
+enable 5G-1 guest Wi-Fi
+turn on guest network three
+disable the 5 gigahertz dash two guest network
+is Smart Connect on
+is OFDMA enabled
+do a speed test
+check our internet speed
+what is our download speed
+inspect router
+```
+
+Guest-network mapping:
+
+| Nova name | Router control |
+| --- | --- |
+| Guest network 1 | 2.4 GHz guest network |
+| Guest network 2 | 5 GHz-1 guest network |
+| Guest network 3 | 5 GHz-2 guest network |
+
+Main Wi-Fi radios remain separate from guest networks. If a guest network is enabled while its matching main radio is off, Nova turns on the matching main radio first and verifies both states.
+
+For “turn off Wi-Fi,” Nova requires Ethernet by default and asks for a confirmation phrase before changing router settings. This protects Nova from cutting off its own wireless connection.
+
+State and diagnostics:
+
+- `data/router_state.json` stores only verified radio states, previous main Wi-Fi state, and latest speed-test results.
+- `data/router_diagnostics.json` stores safe operation logs.
+- Router passwords, cookies, tokens, and page HTML are never stored.
+- Optional screenshots must be explicitly enabled and are Git-ignored.
+
+Troubleshooting:
+
+- If Nova says Playwright is unavailable, run `pip install -r requirements.txt` and `python -m playwright install chromium`.
+- If Nova cannot reach the router, confirm the Pi is on the router LAN and the configured URL opens locally.
+- If Nova says the Wireless page changed, run `inspect router` from the Pi and update selectors after reviewing the live page.
+- Use `test router status` for a safe read-only check before trying commands that change Wi-Fi.
 
 ## Volume Control
 

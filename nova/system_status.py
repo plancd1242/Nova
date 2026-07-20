@@ -65,4 +65,11 @@ class SystemStatusManager:
         except Exception:
             parts.append("Volume: N/A")
 
+        try:
+            from nova.router_status import status_summary
+
+            parts.append("Router: " + status_summary())
+        except Exception:
+            parts.append("Router: N/A")
+
         return SystemStatus(" | ".join(parts))

@@ -3,3 +3,7 @@ backups/*.zip
 data/voice_profiles/*.wav
 data/voice_profiles/*.flac
 data/voice_profiles/*.mp3
+data/router_state.json
+data/router_diagnostics.json
+data/router_diagnostics/
+data/router_screenshots/
