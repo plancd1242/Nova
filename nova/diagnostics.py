@@ -50,6 +50,8 @@ class Diagnostics:
             return self.wake_word()
         if name in {"listen once", "voice listen once"}:
             return self.listen_once()
+        if name in {"vosk model", "download vosk model", "install vosk model"}:
+            return self.vosk_model()
         if name in {"accounts", "account system"}:
             return self.accounts()
         if name in {"router", "router control"}:
@@ -235,6 +237,11 @@ class Diagnostics:
         if not result.ok:
             return result.message
         return f'I heard: "{result.text}".'
+
+    def vosk_model(self) -> str:
+        from nova.vosk_model_manager import get_vosk_model_manager
+
+        return get_vosk_model_manager().ensure_model().message
 
     def accounts(self) -> str:
         from pathlib import Path

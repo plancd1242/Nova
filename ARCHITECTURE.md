@@ -139,6 +139,9 @@ Modules:
 - `nova/speech_to_text.py`: offline Vosk transcription.
 - `nova/wake_word.py`: Vosk-based wake-word detection.
 - `nova/voice_loop.py`: command capture loop and integration with Nova's status displays.
+- `nova/vosk_model_manager.py`: optional first-run model download and local model verification.
+
+Vosk model downloads are opt-in. If enabled, Nova downloads the configured model ZIP to the local `models/` folder and verifies the extracted model shape before using it. Models are Git-ignored and should not be committed.
 
 ## Temperature And Humidity Sensor
 

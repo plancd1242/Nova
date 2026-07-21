@@ -8,6 +8,7 @@ from typing import Any
 
 from nova.config import ROOT_DIR, settings
 from nova.microphone import Microphone
+from nova.vosk_model_manager import get_vosk_model_manager
 
 
 @dataclass(frozen=True)
@@ -35,8 +36,9 @@ class VoskSpeechToText:
             return mic_status.message
         if not self._vosk_available():
             return "Vosk is not installed."
-        if not self.model_path.exists():
-            return f"Vosk model is missing at {self.model_path}."
+        model = get_vosk_model_manager().ensure_model()
+        if not model.ok:
+            return model.message
         return "Offline Vosk voice commands are available."
 
     def listen_once(self, seconds: float | None = None) -> TranscriptionResult:
@@ -134,8 +136,9 @@ class VoskSpeechToText:
             return TranscriptionResult(False, "", mic_status.status, mic_status.message)
         if not self._vosk_available():
             return TranscriptionResult(False, "", "Not Installed", "Vosk is not installed.")
-        if not self.model_path.exists():
-            return TranscriptionResult(False, "", "Missing Model", f"Vosk model is missing at {self.model_path}.")
+        model = get_vosk_model_manager().ensure_model()
+        if not model.ok:
+            return TranscriptionResult(False, "", "Missing Model", model.message)
         return None
 
     def _vosk_available(self) -> bool:

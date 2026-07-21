@@ -664,9 +664,25 @@ class NovaApp:
 
     def _voice_command(self, command: str) -> str | None:
         lower = command.lower()
-        if not any(phrase in lower for phrase in ["listen once", "voice status", "microphone status", "list microphones", "start voice", "wake word status"]):
+        if not any(
+            phrase in lower
+            for phrase in [
+                "listen once",
+                "voice status",
+                "microphone status",
+                "list microphones",
+                "start voice",
+                "wake word status",
+                "download vosk model",
+                "install vosk model",
+            ]
+        ):
             return None
         try:
+            if "download vosk model" in lower or "install vosk model" in lower:
+                from nova.vosk_model_manager import get_vosk_model_manager
+
+                return get_vosk_model_manager().download_model().message
             if "list microphones" in lower:
                 from nova.microphone import list_devices
 

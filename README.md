@@ -443,7 +443,7 @@ Install the Python packages:
 pip install -r requirements.txt
 ```
 
-Install a Vosk English model locally. For example, download `vosk-model-small-en-us-0.15` from the Vosk model list and place it at:
+Install a Vosk English model locally. For example, download `vosk-model-small-en-us-0.15` from the official Vosk model list and place it at:
 
 ```text
 models/vosk-model-small-en-us-0.15
@@ -454,11 +454,12 @@ Configuration:
 ```env
 NOVA_MICROPHONE_ENABLED=true
 NOVA_VOICE_COMMANDS_ENABLED=true
-NOVA_VOICE_INPUT_MODE=typed
 NOVA_VOICE_WAKE_WORD_ENABLED=false
 NOVA_VOICE_WAKE_WORDS=hey nova,nova
 NOVA_VOICE_TRANSCRIPTION_ENGINE=vosk
 NOVA_VOSK_MODEL_PATH=models/vosk-model-small-en-us-0.15
+NOVA_VOSK_MODEL_AUTO_DOWNLOAD=false
+NOVA_VOSK_MODEL_URL=https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
 NOVA_AUDIO_INPUT_DEVICE=
 NOVA_VOICE_SAMPLE_RATE=16000
 NOVA_VOICE_RECORD_SECONDS=5
@@ -475,7 +476,16 @@ test microphone
 test voice
 test listen once
 test wake word
+test vosk model
 ```
+
+If `NOVA_VOSK_MODEL_AUTO_DOWNLOAD=true`, Nova can download the configured model ZIP on first voice use or when you type:
+
+```text
+download vosk model
+```
+
+The default URL uses the official Alpha Cephei/Vosk model host. Some Vosk models also have Hugging Face mirrors, but Nova defaults to the official source.
 
 Run one command from the shell:
 
