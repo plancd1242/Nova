@@ -46,7 +46,7 @@ class VoskSpeechToText:
         if ready is not None:
             return ready
 
-        recognizer = self._recognizer()
+        recognizer = self._recognizer(self.microphone.resolve_sample_rate())
         deadline = time.time() + max(1.0, seconds or settings.voice_record_seconds)
 
         try:
@@ -67,7 +67,7 @@ class VoskSpeechToText:
         if ready is not None:
             return ready
 
-        recognizer = self._recognizer()
+        recognizer = self._recognizer(self.microphone.resolve_sample_rate())
         final_texts: list[str] = []
         last_voice = time.time()
         started = time.time()
@@ -103,7 +103,7 @@ class VoskSpeechToText:
         return TranscriptionResult(True, text, "Recognized", text)
 
     def new_recognizer(self) -> Any:
-        return self._recognizer()
+        return self._recognizer(self.microphone.resolve_sample_rate())
 
     def model_ready(self) -> bool:
         return self._ready_result() is None
@@ -111,10 +111,10 @@ class VoskSpeechToText:
     def _accept_audio(self, recognizer: Any, audio: bytes) -> None:
         recognizer.AcceptWaveform(audio)
 
-    def _recognizer(self) -> Any:
+    def _recognizer(self, sample_rate: int | None = None) -> Any:
         from vosk import KaldiRecognizer  # type: ignore
 
-        recognizer = KaldiRecognizer(self._load_model(), self.sample_rate)
+        recognizer = KaldiRecognizer(self._load_model(), sample_rate or self.sample_rate)
         recognizer.SetWords(False)
         return recognizer
 

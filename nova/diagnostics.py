@@ -217,7 +217,8 @@ class Diagnostics:
         from nova.microphone import status
 
         current = status()
-        return f"Microphone: {current.status}. {current.message}"
+        rate = f" Sample rate: {current.sample_rate} Hz." if current.sample_rate else ""
+        return f"Microphone: {current.status}. {current.message}{rate}"
 
     def microphones(self) -> str:
         from nova.microphone import list_devices

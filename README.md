@@ -468,6 +468,8 @@ NOVA_VOICE_SILENCE_SECONDS=1.2
 NOVA_VOICE_WAKE_COOLDOWN_SECONDS=2
 ```
 
+`NOVA_VOICE_SAMPLE_RATE=16000` is Nova's preferred Vosk rate. Some USB microphones reject 16 kHz through PortAudio/ALSA. In that case Nova now falls back to a supported microphone rate such as 44.1 kHz or 48 kHz and passes that same rate to Vosk.
+
 Useful tests:
 
 ```text

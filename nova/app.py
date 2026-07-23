@@ -691,7 +691,8 @@ class NovaApp:
                 from nova.microphone import status
 
                 current = status()
-                return f"Microphone: {current.status}. {current.message}"
+                rate = f" Sample rate: {current.sample_rate} Hz." if current.sample_rate else ""
+                return f"Microphone: {current.status}. {current.message}{rate}"
             if "wake word status" in lower:
                 from nova.wake_word import get_wake_word_detector
 
