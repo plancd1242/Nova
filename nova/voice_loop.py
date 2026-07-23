@@ -39,7 +39,7 @@ class VoiceLoop:
         self.app.status_display("thinking")
         answer = self.app.handle_command(result.text)
         self.app.status_display("done")
-        return f'I heard: "{result.text}". {answer}'
+        return self._voice_answer(result.text, answer)
 
     def run_forever(self) -> None:
         if not settings.voice_commands_enabled:
@@ -89,5 +89,10 @@ class VoiceLoop:
         self.app.status_display("thinking")
         answer = self.app.handle_command(result.text)
         self.app.status_display("speaking")
-        self.app.say(answer)
+        self.app.say(self._voice_answer(result.text, answer))
         self.app.status_display("done")
+
+    def _voice_answer(self, heard: str, answer: str) -> str:
+        if answer.strip().lower() == "i do not know that command yet.":
+            return f'I heard "{heard}", but I do not know that command yet.'
+        return answer

@@ -4,6 +4,7 @@ import unittest
 
 from nova.speech_to_text import get_speech_to_text
 from nova.vosk_model_manager import VoskModelManager
+from nova.voice_loop import VoiceLoop
 from nova.wake_word import WakeWordDetector
 from nova.microphone import Microphone
 
@@ -39,6 +40,25 @@ class VoiceInputTests(unittest.TestCase):
         mic = Microphone()
         rate = mic._supported_sample_rate(FakeSoundDevice(), {"default_samplerate": 48000})
         self.assertEqual(rate, 48000)
+
+    def test_voice_unknown_command_says_what_was_heard(self) -> None:
+        class FakeApp:
+            state = object()
+
+            def status_display(self, mode, extra_lines=None):
+                pass
+
+            def handle_command(self, command):
+                return "I do not know that command yet."
+
+            def say(self, text):
+                pass
+
+        loop = VoiceLoop(FakeApp())
+        self.assertEqual(
+            loop._voice_answer("turn on the moon lamp", "I do not know that command yet."),
+            'I heard "turn on the moon lamp", but I do not know that command yet.',
+        )
 
 
 if __name__ == "__main__":

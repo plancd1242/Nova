@@ -255,21 +255,72 @@ Nova keeps hardware and status features in separate modules so missing parts do 
 - `nova/notifications.py` stores notification history.
 - `nova/system_status.py` aggregates Nova's overall status.
 
-Commands include:
+Implemented commands include:
 
 ```text
+hello
+hi nova
+hey nova
+quit
+exit
+stop nova
+
+time
+date
+
 hardware status
 sensor status
 system status
 oled status
+
+room temperature
+humidity
+climate
+
 volume status
 set volume to 50
 volume up
 volume down
 mute
 unmute
+
 show notifications
 clear notifications
+
+go private
+go private for 10 minutes
+privacy mode
+private time left
+wake up
+stop private
+
+sleep mode
+lockdown mode
+
+tell me a joke
+spell example
+define example
+weather
+play music
+quiz
+remember this ...
+search ...
+look up ...
+what is 2 plus 2
+
+who am i
+current account
+create account Caleb
+switch account Caleb
+list accounts
+
+voice status
+microphone status
+list microphones
+wake word status
+listen once
+download vosk model
+
 test oled
 test backup screen
 test sleep mode
@@ -293,6 +344,7 @@ test microphones
 test voice
 test wake word
 test listen once
+test vosk model
 test accounts
 test voice login
 ```
@@ -344,9 +396,12 @@ disable the 5 gigahertz dash two guest network
 is Smart Connect on
 is OFDMA enabled
 do a speed test
+run a speed test
 check our internet speed
 what is our download speed
 inspect router
+test router
+test router status
 ```
 
 Guest-network mapping:
